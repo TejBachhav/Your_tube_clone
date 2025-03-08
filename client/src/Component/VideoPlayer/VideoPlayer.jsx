@@ -51,19 +51,27 @@
 
 // src/components/VideoPlayer/VideoPlayer.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactPlayer from 'react-player';
 
-const VideoPlayer = ({ videoSources }) => {
-  // Set default to 320p
-  const defaultSource = videoSources.find(source => source.label === '320p') || videoSources[0];
-  const [selectedSource, setSelectedSource] = useState(defaultSource);
+const VideoPlayer = ({ videoSources, defaultQuality = '320p' }) => {
+  const [selectedSource, setSelectedSource] = useState(null);
+
+  // When videoSources change, set the default source based on defaultQuality.
+  useEffect(() => {
+    if (videoSources && videoSources.length) {
+      const defaultSource = videoSources.find(source => source.label === defaultQuality) || videoSources[0];
+      setSelectedSource(defaultSource);
+    }
+  }, [videoSources, defaultQuality]);
 
   const handleQualityChange = (e) => {
     const newQuality = e.target.value;
     const newSource = videoSources.find(source => source.label === newQuality);
     setSelectedSource(newSource);
   };
+
+  if (!selectedSource) return <div>Loading...</div>;
 
   return (
     <div>
@@ -92,16 +100,3 @@ const VideoPlayer = ({ videoSources }) => {
 };
 
 export default VideoPlayer;
-
-
-// # 1080p
-// ffmpeg -i "2022-08-13T17-40-41.356Z-production ID_5057337.mp4" -vf scale=-2:1080 -c:v libx264 -crf 23 -preset medium -c:a aac -b:a 128k output_1080p.mp4
-
-// # 720p
-// ffmpeg -i "2022-08-13T17-40-41.356Z-production ID_5057337.mp4" -vf scale=-2:720 -c:v libx264 -crf 23 -preset medium -c:a aac -b:a 128k output_720p.mp4
-
-// # 480p
-// ffmpeg -i "2022-08-13T17-40-41.356Z-production ID_5057337.mp4" -vf scale=-2:480 -c:v libx264 -crf 23 -preset medium -c:a aac -b:a 128k output_480p.mp4
-
-// # 320p
-// ffmpeg -i "2022-08-13T17-40-41.356Z-production ID_5057337.mp4" -vf scale=-2:320 -c:v libx264 -crf 23 -preset medium -c:a aac -b:a 128k output_320p.mp4
