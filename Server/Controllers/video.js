@@ -137,15 +137,14 @@ import path from "path";
 import fs from "fs";
 import videofile from "../Models/videofile.js"; // Adjust the path as needed
 
-// Helper function to create folder if it doesn't exist
+// Helper function to create a folder if it doesn't exist
 const createFolder = (folderPath) => {
   if (!fs.existsSync(folderPath)) {
     fs.mkdirSync(folderPath, { recursive: true });
   }
 };
 
-// Helper function to transcode video for a given quality.
-// Adjusted FFmpeg parameters for low CPU usage.
+// Helper function to transcode a video for a specific quality
 const transcodeVideo = (inputPath, outputDir, quality) => {
   return new Promise((resolve, reject) => {
     const outputPath = path.join(outputDir, `sample_${quality.label}.mp4`);
@@ -153,13 +152,14 @@ const transcodeVideo = (inputPath, outputDir, quality) => {
       .outputOptions([
         `-vf scale=-2:${quality.height}`,
         "-c:v libx264",
-        "-preset ultrafast", // Less CPU intensive
-        "-crf 28",           // Lower quality but faster encoding
+        "-preset ultrafast", // Lower CPU usage
+        "-crf 28",           // Faster encoding with lower quality
         "-c:a aac",
         "-b:a 128k"
       ])
       .save(outputPath)
       .on("end", () => {
+        // Return the relative path starting from the Videos folder
         resolve({ label: quality.label, path: path.join(path.basename(outputDir), `sample_${quality.label}.mp4`) });
       })
       .on("error", (err) => reject(err));
@@ -167,17 +167,16 @@ const transcodeVideo = (inputPath, outputDir, quality) => {
 };
 
 export const uploadvideo = async (req, res) => {
-  if (!req.file) {
+  if (req.file === undefined) {
     return res.status(404).json({ message: "Please upload an MP4 video file only" });
   }
-
   try {
-    // Create a unique folder name using timestamp and sanitized original name
+    // Create a unique folder name using timestamp and a sanitized original name
     const folderName = Date.now() + "-" + req.file.originalname.replace(/\s/g, "_");
     const outputDir = path.join("public", "Videos", folderName);
     createFolder(outputDir);
 
-    // Define the qualities you want to generate
+    // Define the desired quality versions
     const qualities = [
       { label: "1080p", height: 1080 },
       { label: "720p", height: 720 },
@@ -185,30 +184,30 @@ export const uploadvideo = async (req, res) => {
       { label: "320p", height: 320 },
     ];
 
-    // Create transcoding promises for each quality
-    const transcodingPromises = qualities.map((q) => transcodeVideo(req.file.path, outputDir, q));
-
+    // Transcode the video into all qualities in parallel
+    const transcodingPromises = qualities.map(q => transcodeVideo(req.file.path, outputDir, q));
     const results = await Promise.all(transcodingPromises);
     console.log("Transcoding complete:", results);
 
-    // Build the video document with additional fields
+    // Prepare the video document data
+    const file = req.file;
     const videoData = {
       videotitle: req.body.title,
-      filename: req.file.originalname,
-      filetype: req.file.mimetype,
-      filepath: path.join(folderName, req.file.filename), // fallback or original file path
-      filesize: req.file.size.toString(),
+      filename: file.originalname,
+      filetype: file.mimetype,
+      // Store the fallback/original file path (if needed)
+      filepath: path.join(folderName, file.filename),
+      filesize: file.size.toString(),
       videochanel: req.body.chanel,
       uploader: req.body.uploader,
-      // New fields for quality versions:
       folder: folderName,
-      filepath1080p: results.find((r) => r.label === "1080p")?.path,
-      filepath720p: results.find((r) => r.label === "720p")?.path,
-      filepath480p: results.find((r) => r.label === "480p")?.path,
-      filepath320p: results.find((r) => r.label === "320p")?.path,
+      filepath1080p: results.find(r => r.label === "1080p")?.path,
+      filepath720p: results.find(r => r.label === "720p")?.path,
+      filepath480p: results.find(r => r.label === "480p")?.path,
+      filepath320p: results.find(r => r.label === "320p")?.path,
     };
 
-    // Save the video document in the database
+    // Save the video document to the database
     const savedVideo = await videofile.create(videoData);
     res.status(200).json(savedVideo);
   } catch (error) {
