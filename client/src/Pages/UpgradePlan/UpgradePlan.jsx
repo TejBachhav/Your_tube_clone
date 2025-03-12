@@ -17,7 +17,7 @@ const UpgradePlan = ({ setUpgradePlanModal, currentUserId }) => {
     }
 
     try {
-      const { data } = await axios.post("http://localhost:5000/plan/upgrade", {
+      const { data } = await axios.post("https://your-tube-clone-2c2e.onrender.com/plan/upgrade", {
         userId: currentUserId,
         plan: selectedPlan,
       });
@@ -30,7 +30,7 @@ const UpgradePlan = ({ setUpgradePlanModal, currentUserId }) => {
 
   const confirmUpgrade = async () => {
     try {
-      await axios.post("http://localhost:5000/plan/confirm-upgrade", {
+      await axios.post("https://your-tube-clone-2c2e.onrender.com/plan/confirm-upgrade", {
         userId: currentUserId,
         plan: selectedPlan,
       });
