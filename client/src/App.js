@@ -70,10 +70,10 @@ import { useDispatch, useSelector } from "react-redux";
 import Allroutes from "./Allroutes";
 import { BrowserRouter as Router } from "react-router-dom";
 import Drawersliderbar from "./Component/Leftsidebar/Drawersliderbar";
-import Createeditchannel from "./Pages/Channel/Createeditchannel"; // Updated import
+import Createeditchannel from "./Pages/Channel/Createeditchannel"; // Correct path
 import Videoupload from "./Pages/Videoupload/Videoupload";
-import UpgradePlan from "./Pages/UpgradePlan/UpgradePlan"; // Import UpgradePlan component
-import VideoCall from "./Pages/VideoCall/VideoCall"; // Import VideoCall component
+import UpgradePlan from "./Pages/UpgradePlan/UpgradePlan"; // UpgradePlan component
+import VideoCall from "./Pages/VideoCall/VideoCall"; // VideoCall component
 import { fetchallchannel } from "./action/channeluser";
 import { getallvideo } from "./action/video";
 import { getallcomment } from "./action/comment";
@@ -83,7 +83,7 @@ import { getallwatchlater } from "./action/watchlater";
 
 function App() {
   const [toggledrawersidebar, settogledrawersidebar] = useState({ display: "none" });
-  const [editcreatechannelbtn, seteditcreatechannelbtn] = useState(false);
+  const [editcreatechanelbtn, seteditcreatechanelbtn] = useState(false);
   const [videouploadpage, setvideouploadpage] = useState(false);
   const [upgradePlanModal, setUpgradePlanModal] = useState(false); // For plan upgrade modal
   const [videoCallModal, setVideoCallModal] = useState(false); // For video call modal
@@ -112,8 +112,8 @@ function App() {
       {videouploadpage && (
         <Videoupload setvideouploadpage={setvideouploadpage} />
       )}
-      {editcreatechannelbtn && (
-        <Createeditchannel seteditcreatechanelbtn={seteditcreatechannelbtn} />
+      {editcreatechanelbtn && (
+        <Createeditchannel seteditcreatechanelbtn={seteditcreatechanelbtn} />
       )}
       {upgradePlanModal && (
         <UpgradePlan
@@ -125,7 +125,7 @@ function App() {
         <VideoCall setVideoCallModal={setVideoCallModal} />
       )}
       <Navbar
-        seteditcreatechannelbtn={seteditcreatechannelbtn}
+        seteditcreatechanelbtn={seteditcreatechanelbtn}
         toggledrawer={toggledrawer}
         setUpgradePlanModal={setUpgradePlanModal}
         setVideoCallModal={setVideoCallModal}
@@ -135,7 +135,7 @@ function App() {
         toggledrawersidebar={toggledrawersidebar}
       />
       <Allroutes
-        seteditcreatechanelbtn={seteditcreatechannelbtn}
+        seteditcreatechanelbtn={seteditcreatechanelbtn}
         setvideouploadpage={setvideouploadpage}
         setUpgradePlanModal={setUpgradePlanModal}
         setVideoCallModal={setVideoCallModal}
@@ -145,4 +145,5 @@ function App() {
 }
 
 export default App;
+
 
