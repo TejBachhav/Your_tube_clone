@@ -39,7 +39,7 @@
 
 import axios from "axios";
 
-const API = axios.create({ baseURL: "https://your-tube-clone-2c2e.onrender.com" });
+const API = axios.create({ baseURL: "http://localhost:5000/" });
 
 // Request interceptor to attach token if available
 API.interceptors.request.use((req) => {
