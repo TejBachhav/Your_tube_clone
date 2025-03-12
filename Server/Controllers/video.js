@@ -135,16 +135,17 @@
 import ffmpeg from "fluent-ffmpeg";
 import path from "path";
 import fs from "fs";
-import videofile from "../Models/videofile.js";
+import videofile from "../Models/videofile.js"; // Adjust the path as needed
 
-// Helper to ensure a folder exists.
+// Helper function to create folder if it doesn't exist
 const createFolder = (folderPath) => {
   if (!fs.existsSync(folderPath)) {
     fs.mkdirSync(folderPath, { recursive: true });
   }
 };
 
-// Helper to transcode video for a given quality.
+// Helper function to transcode video for a given quality.
+// Adjusted FFmpeg parameters for low CPU usage.
 const transcodeVideo = (inputPath, outputDir, quality) => {
   return new Promise((resolve, reject) => {
     const outputPath = path.join(outputDir, `sample_${quality.label}.mp4`);
@@ -152,13 +153,15 @@ const transcodeVideo = (inputPath, outputDir, quality) => {
       .outputOptions([
         `-vf scale=-2:${quality.height}`,
         "-c:v libx264",
-        "-crf 23",
-        "-preset medium",
+        "-preset ultrafast", // Less CPU intensive
+        "-crf 28",           // Lower quality but faster encoding
         "-c:a aac",
         "-b:a 128k"
       ])
       .save(outputPath)
-      .on("end", () => resolve({ label: quality.label, path: path.join(path.basename(outputDir), `sample_${quality.label}.mp4`) }))
+      .on("end", () => {
+        resolve({ label: quality.label, path: path.join(path.basename(outputDir), `sample_${quality.label}.mp4`) });
+      })
       .on("error", (err) => reject(err));
   });
 };
@@ -169,43 +172,43 @@ export const uploadvideo = async (req, res) => {
   }
 
   try {
-    // Create a unique folder name for this video.
+    // Create a unique folder name using timestamp and sanitized original name
     const folderName = Date.now() + "-" + req.file.originalname.replace(/\s/g, "_");
     const outputDir = path.join("public", "Videos", folderName);
     createFolder(outputDir);
 
-    // Qualities to generate.
+    // Define the qualities you want to generate
     const qualities = [
       { label: "1080p", height: 1080 },
       { label: "720p", height: 720 },
       { label: "480p", height: 480 },
-      { label: "320p", height: 320 }
+      { label: "320p", height: 320 },
     ];
 
-    // Transcode for all qualities in parallel.
-    const transcodedFiles = await Promise.all(
-      qualities.map(q => transcodeVideo(req.file.path, outputDir, q))
-    );
-    console.log("Transcoding complete:", transcodedFiles);
+    // Create transcoding promises for each quality
+    const transcodingPromises = qualities.map((q) => transcodeVideo(req.file.path, outputDir, q));
 
-    // Build the video document.
+    const results = await Promise.all(transcodingPromises);
+    console.log("Transcoding complete:", results);
+
+    // Build the video document with additional fields
     const videoData = {
       videotitle: req.body.title,
       filename: req.file.originalname,
       filetype: req.file.mimetype,
-      // Use the unique folder as a fallback path.
-      filepath: path.join(folderName, req.file.filename),
+      filepath: path.join(folderName, req.file.filename), // fallback or original file path
       filesize: req.file.size.toString(),
       videochanel: req.body.chanel,
       uploader: req.body.uploader,
+      // New fields for quality versions:
       folder: folderName,
-      filepath1080p: transcodedFiles.find(r => r.label === "1080p")?.path,
-      filepath720p: transcodedFiles.find(r => r.label === "720p")?.path,
-      filepath480p: transcodedFiles.find(r => r.label === "480p")?.path,
-      filepath320p: transcodedFiles.find(r => r.label === "320p")?.path
+      filepath1080p: results.find((r) => r.label === "1080p")?.path,
+      filepath720p: results.find((r) => r.label === "720p")?.path,
+      filepath480p: results.find((r) => r.label === "480p")?.path,
+      filepath320p: results.find((r) => r.label === "320p")?.path,
     };
 
-    // Save the document.
+    // Save the video document in the database
     const savedVideo = await videofile.create(videoData);
     res.status(200).json(savedVideo);
   } catch (error) {
