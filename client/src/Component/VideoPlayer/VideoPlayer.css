@@ -1,0 +1,30 @@
+.video-player-container {
+    position: relative;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  
+  .player-loading {
+    text-align: center;
+    padding: 20px;
+    font-size: 1.2rem;
+    color: #666;
+  }
+  
+  .quality-select-container {
+    margin-top: 10px;
+    text-align: center;
+  }
+  
+  .quality-select-container label {
+    font-size: 1rem;
+    margin-right: 8px;
+  }
+  
+  .quality-select-container select {
+    padding: 6px 8px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  

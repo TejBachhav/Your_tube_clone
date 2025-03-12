@@ -1,4 +1,4 @@
-.Container_Navbar{
+/* .Container_Navbar{
     border: 1px solid;
     display: flex;
     height: calc(3.5rem - 2px);
@@ -66,3 +66,167 @@
     padding: 0.5rem;
     border-radius: 0.1rem;
 }
+
+.plan-button {
+    margin-left: 20px;
+    padding: 6px 12px;
+    background-color: #28a745;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+  }
+  
+  .plan-button:hover {
+    background-color: #218838;
+  }
+  
+  .plan-label {
+    font-weight: bold;
+  }
+  
+  .plan-upgrade-text {
+    font-size: 0.7rem;
+    margin-top: 2px;
+    text-decoration: underline;
+  }
+   */
+
+   .Container_Navbar {
+    border: 1px solid;
+    display: flex;
+    height: calc(3.5rem - 2px);
+    background-color: rgb(33, 33, 33);
+    justify-content: space-between;
+    padding: 0 1rem;
+  }
+  
+  .Burger_Logo_Navbar {
+    display: flex;
+    align-items: center;
+    height: 3.3rem;
+  }
+  
+  .burger {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    cursor: pointer;
+    margin: 0.2rem 0.7rem 0.2rem 0.5rem;
+    padding: 0.5rem;
+    border: 1px solid transparent;
+    border-radius: 100%;
+  }
+  
+  .burger p {
+    margin: 0.5px;
+    width: 1.2rem;
+    height: 0.1rem;
+    background-color: rgb(255, 244, 244);
+  }
+  
+  .logo_div_Navbar {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+  }
+  
+  .logo_title_navbar {
+    margin: auto;
+    color: white;
+    font-weight: bold;
+  }
+  
+  .apps_Box {
+    width: 25px;
+    margin: auto 0.7rem;
+    height: 25px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+  }
+  
+  .appBox {
+    border: 1px solid white;
+    margin: 0.1rem;
+    width: 2px;
+    height: 2px;
+  }
+  
+  .Auth_cont_Navbar {
+    width: fit-content;
+    margin: auto 0.5rem;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .Auth_Btn {
+    cursor: pointer;
+    color: #3ea6ff;
+    background-color: rgb(36, 36, 36);
+    border: 2px solid;
+    margin: 0;
+    padding: 0.5rem;
+    border-radius: 0.1rem;
+  }
+  
+  /* New Plan Button Styles */
+  .plan-button {
+    margin-left: 20px;
+    padding: 6px 12px;
+    background-color: #28a745;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+  }
+  
+  .plan-button:hover {
+    background-color: #218838;
+  }
+  
+  .plan-label {
+    font-weight: bold;
+  }
+  
+  .plan-upgrade-text {
+    font-size: 0.7rem;
+    margin-top: 2px;
+    text-decoration: underline;
+  }
+  
+  /* Video Call Button Styles */
+  .video-call-button {
+    margin-left: 20px;
+    padding: 6px 12px;
+    background-color: #17a2b8;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+  }
+  
+  .video-call-button:hover {
+    background-color: #138496;
+  }
+  
+  .video-call-button span {
+    margin-top: 4px;
+  }
+  

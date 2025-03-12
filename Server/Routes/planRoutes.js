@@ -3,10 +3,9 @@ import { upgradePlan, confirmPlanUpgrade } from '../Controllers/planController.j
 
 const router = express.Router();
 
-// Endpoint to create a payment intent for upgrading plan
+// Create dummy order for plan upgrade
 router.post('/upgrade', upgradePlan);
-
-// Endpoint to confirm a successful upgrade (after payment)
+// Confirm upgrade and update user's subscription plan
 router.post('/confirm-upgrade', confirmPlanUpgrade);
 
 export default router;

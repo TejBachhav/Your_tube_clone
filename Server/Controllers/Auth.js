@@ -1,3 +1,50 @@
+// import dotenv from "dotenv";
+// dotenv.config();
+// import User from "../Models/Auth.js";
+// // import jwt from "jsonwebtoken";
+
+// export const login = async (req, res) => {
+//   const { email } = req.body;
+//   console.log("Login attempt for email:", email);
+  
+//   try {
+//     const existingUser = await User.findOne({ email });
+//     console.log("Found existing user:", existingUser);
+    
+//     if (!existingUser) {
+//       try {
+//         const newUser = await User.create({ email });
+//         console.log("Created new user:", newUser);
+//         const token = jwt.sign(
+//           { email: newUser.email, id: newUser._id },
+//           process.env.JWT_SECRET,
+//           { expiresIn: "1h" }
+//         );
+//         return res.status(200).json({ result: newUser, token });
+//       } catch (error) {
+//         console.error("Error creating new user:", error);
+//         return res.status(500).json({ message: "Something went wrong during user creation." });
+//       }
+//     } else {
+//       try {
+//         const token = jwt.sign(
+//           { email: existingUser.email, id: existingUser._id },
+//           process.env.JWT_SECRET,
+//           { expiresIn: "1h" }
+//         );
+//         return res.status(200).json({ result: existingUser, token });
+//       } catch (error) {
+//         console.error("Error signing token:", error);
+//         return res.status(500).json({ message: "Something went wrong during token signing." });
+//       }
+//     }
+//   } catch (error) {
+//     console.error("Error during login:", error);
+//     return res.status(500).json({ message: "Something went wrong during login." });
+//   }
+// };
+
+
 import users from "../Models/Auth.js"
 import jwt from "jsonwebtoken"
 export const login = async (req, res) => {
