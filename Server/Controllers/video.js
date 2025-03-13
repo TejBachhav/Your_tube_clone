@@ -131,20 +131,115 @@
 // };
 
 
+// "use strict";
+// import ffmpeg from "fluent-ffmpeg";
+// import path from "path";
+// import fs from "fs";
+// import videofile from "../Models/videofile.js"; // Adjust the path as needed
+
+// // Helper function to create a folder if it doesn't exist
+// const createFolder = (folderPath) => {
+//   if (!fs.existsSync(folderPath)) {
+//     fs.mkdirSync(folderPath, { recursive: true });
+//   }
+// };
+
+// // Helper function to transcode a video for a specific quality
+// const transcodeVideo = (inputPath, outputDir, quality) => {
+//   return new Promise((resolve, reject) => {
+//     const outputPath = path.join(outputDir, `sample_${quality.label}.mp4`);
+//     ffmpeg(inputPath)
+//       .outputOptions([
+//         `-vf scale=-2:${quality.height}`,
+//         "-c:v libx264",
+//         "-preset ultrafast", // Lower CPU usage
+//         "-crf 28",           // Faster encoding with lower quality
+//         "-c:a aac",
+//         "-b:a 128k"
+//       ])
+//       .save(outputPath)
+//       .on("end", () => {
+//         // Return the relative path starting from the Videos folder
+//         resolve({ label: quality.label, path: path.join(path.basename(outputDir), `sample_${quality.label}.mp4`) });
+//       })
+//       .on("error", (err) => reject(err));
+//   });
+// };
+
+// export const uploadvideo = async (req, res) => {
+//   if (req.file === undefined) {
+//     return res.status(404).json({ message: "Please upload an MP4 video file only" });
+//   }
+//   try {
+//     // Create a unique folder name using timestamp and a sanitized original name
+//     const folderName = Date.now() + "-" + req.file.originalname.replace(/\s/g, "_");
+//     const outputDir = path.join("public", "Videos", folderName);
+//     createFolder(outputDir);
+
+//     // Define the desired quality versions
+//     const qualities = [
+//       { label: "1080p", height: 1080 },
+//       { label: "720p", height: 720 },
+//       { label: "480p", height: 480 },
+//       { label: "320p", height: 320 },
+//     ];
+
+//     // Transcode the video into all qualities in parallel
+//     const transcodingPromises = qualities.map(q => transcodeVideo(req.file.path, outputDir, q));
+//     const results = await Promise.all(transcodingPromises);
+//     console.log("Transcoding complete:", results);
+
+//     // Prepare the video document data
+//     const file = req.file;
+//     const videoData = {
+//       videotitle: req.body.title,
+//       filename: file.originalname,
+//       filetype: file.mimetype,
+//       // Store the fallback/original file path (if needed)
+//       filepath: path.join(folderName, file.filename),
+//       filesize: file.size.toString(),
+//       videochanel: req.body.chanel,
+//       uploader: req.body.uploader,
+//       folder: folderName,
+//       filepath1080p: results.find(r => r.label === "1080p")?.path,
+//       filepath720p: results.find(r => r.label === "720p")?.path,
+//       filepath480p: results.find(r => r.label === "480p")?.path,
+//       filepath320p: results.find(r => r.label === "320p")?.path,
+//     };
+
+//     // Save the video document to the database
+//     const savedVideo = await videofile.create(videoData);
+//     res.status(200).json(savedVideo);
+//   } catch (error) {
+//     console.error("Error uploading video:", error);
+//     res.status(404).json({ message: error.message });
+//   }
+// };
+
+// export const getallvideos = async (req, res) => {
+//   try {
+//     const files = await videofile.find();
+//     res.status(200).json(files);
+//   } catch (error) {
+//     res.status(404).json({ message: error.message });
+//   }
+// };
+
 "use strict";
 import ffmpeg from "fluent-ffmpeg";
 import path from "path";
 import fs from "fs";
-import videofile from "../Models/videofile.js"; // Adjust the path as needed
+import videofile from "../Models/videofile.js";
+import cloudinary from "../cloudinaryConfig.js";
 
-// Helper function to create a folder if it doesn't exist
+// Helper: Ensure the folder exists locally.
 const createFolder = (folderPath) => {
   if (!fs.existsSync(folderPath)) {
     fs.mkdirSync(folderPath, { recursive: true });
   }
 };
 
-// Helper function to transcode a video for a specific quality
+// Helper: Transcode video for a specific quality.
 const transcodeVideo = (inputPath, outputDir, quality) => {
   return new Promise((resolve, reject) => {
     const outputPath = path.join(outputDir, `sample_${quality.label}.mp4`);
@@ -159,24 +254,37 @@ const transcodeVideo = (inputPath, outputDir, quality) => {
       ])
       .save(outputPath)
       .on("end", () => {
-        // Return the relative path starting from the Videos folder
-        resolve({ label: quality.label, path: path.join(path.basename(outputDir), `sample_${quality.label}.mp4`) });
+        // Return the full local path
+        resolve({ label: quality.label, localPath: outputPath });
       })
       .on("error", (err) => reject(err));
   });
 };
 
+// Helper: Upload a file from the local filesystem to Cloudinary.
+const uploadToCloudinary = async (localPath, destinationFolder) => {
+  try {
+    const result = await cloudinary.uploader.upload(localPath, {
+      resource_type: "video",
+      folder: destinationFolder,
+    });
+    return result.secure_url;
+  } catch (error) {
+    throw new Error("Cloudinary upload failed: " + error.message);
+  }
+};
+
 export const uploadvideo = async (req, res) => {
-  if (req.file === undefined) {
-    return res.status(404).json({ message: "Please upload an MP4 video file only" });
+  if (!req.file) {
+    return res.status(400).json({ message: "Please upload an MP4 video file only" });
   }
   try {
-    // Create a unique folder name using timestamp and a sanitized original name
-    const folderName = Date.now() + "-" + req.file.originalname.replace(/\s/g, "_");
+    // Create a unique folder name for temporary files.
+    const folderName = `${Date.now()}-${req.file.originalname.replace(/\s/g, "_")}`;
     const outputDir = path.join("public", "Videos", folderName);
     createFolder(outputDir);
 
-    // Define the desired quality versions
+    // Define qualities.
     const qualities = [
       { label: "1080p", height: 1080 },
       { label: "720p", height: 720 },
@@ -184,35 +292,50 @@ export const uploadvideo = async (req, res) => {
       { label: "320p", height: 320 },
     ];
 
-    // Transcode the video into all qualities in parallel
-    const transcodingPromises = qualities.map(q => transcodeVideo(req.file.path, outputDir, q));
-    const results = await Promise.all(transcodingPromises);
-    console.log("Transcoding complete:", results);
+    // Transcode video into all qualities.
+    const transcodingResults = await Promise.all(
+      qualities.map(q => transcodeVideo(req.file.path, outputDir, q))
+    );
+    console.log("Transcoding complete:", transcodingResults);
 
-    // Prepare the video document data
+    // Upload each transcoded file to Cloudinary.
+    const cloudinaryUploads = await Promise.all(
+      transcodingResults.map(async (result) => {
+        const destination = `Videos/${folderName}`;
+        const url = await uploadToCloudinary(result.localPath, destination);
+        return { label: result.label, url };
+      })
+    );
+    console.log("Cloudinary upload complete:", cloudinaryUploads);
+
+    // Build video document data.
     const file = req.file;
     const videoData = {
       videotitle: req.body.title,
       filename: file.originalname,
       filetype: file.mimetype,
-      // Store the fallback/original file path (if needed)
+      // Fallback local file path (if needed)
       filepath: path.join(folderName, file.filename),
       filesize: file.size.toString(),
-      videochanel: req.body.chanel,
+      videochannel: req.body.chanel, // or req.body.channel if that's what you're sending
       uploader: req.body.uploader,
       folder: folderName,
-      filepath1080p: results.find(r => r.label === "1080p")?.path,
-      filepath720p: results.find(r => r.label === "720p")?.path,
-      filepath480p: results.find(r => r.label === "480p")?.path,
-      filepath320p: results.find(r => r.label === "320p")?.path,
+      filepath1080p: cloudinaryUploads.find(r => r.label === "1080p")?.url,
+      filepath720p: cloudinaryUploads.find(r => r.label === "720p")?.url,
+      filepath480p: cloudinaryUploads.find(r => r.label === "480p")?.url,
+      filepath320p: cloudinaryUploads.find(r => r.label === "320p")?.url,
     };
 
-    // Save the video document to the database
+    // Save the video document to MongoDB.
     const savedVideo = await videofile.create(videoData);
-    res.status(200).json(savedVideo);
+    res.status(201).json(savedVideo);
+
+    // Clean up local temporary files.
+    fs.unlinkSync(req.file.path);
+    transcodingResults.forEach(result => fs.unlinkSync(result.localPath));
   } catch (error) {
     console.error("Error uploading video:", error);
-    res.status(404).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -221,6 +344,6 @@ export const getallvideos = async (req, res) => {
     const files = await videofile.find();
     res.status(200).json(files);
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
