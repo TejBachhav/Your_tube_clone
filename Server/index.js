@@ -179,7 +179,78 @@
 //   });
 
 
+// import express from "express";
+// import mongoose from "mongoose";
+// import dotenv from "dotenv";
+// import cors from "cors";
+// import bodyParser from "body-parser";
+// import path from "path";
+
+// // Import route files
+// import videoroutes from "./Routes/video.js";
+// import userroutes from "./Routes/User.js";
+// import commentroutes from "./Routes/comment.js";
+// import videoStreamRoutes from "./Routes/videoStream.js"; // new streaming route
+// import planRoutes from "./Routes/planRoutes.js"; // new plan upgrade routes
+// import convertRouter from "./Routes/convert.js"; // conversion route
+
+// dotenv.config();
+
+// const app = express();
+
+// // Logging middleware: logs every incoming request.
+// app.use((req, res, next) => {
+//   console.log(`Incoming request: ${req.method} ${req.url}`);
+//   next();
+// });
+
+// // Middleware setup
+// app.use(cors());
+// app.use(express.json({ limit: "30mb", extended: true }));
+// app.use(express.urlencoded({ limit: "30mb", extended: true }));
+// app.use(bodyParser.json());
+
+// // Serve static files from 'uploads' and 'public' directories
+// app.use("/uploads", express.static(path.join("uploads")));
+// app.use(express.static(path.join("public")));
+
+// // Basic route
+// app.get("/", (req, res) => {
+//   res.send("Your tube is working");
+// });
+
+// // Mount routes
+// app.use("/user", userroutes);
+// app.use("/video", videoroutes);
+// app.use("/comment", commentroutes);
+// app.use(videoStreamRoutes); // For streaming video files
+// app.use("/plan", planRoutes); // For plan upgrade routes
+// app.use("/convert", convertRouter); // For video conversion
+
+// const PORT = process.env.PORT || 5000;
+// app.listen(PORT, () => {
+//   console.log(`Server running on Port ${PORT}`);
+// });
+
+// // Retrieve DB connection URL from environment variables
+// const DB_URL = process.env.DB_URL;
+// if (!DB_URL) {
+//   console.error("Error: DB_URL environment variable is not defined.");
+//   process.exit(1);
+// }
+// console.log("Connecting to MongoDB with URL:", DB_URL);
+
+// mongoose.connect(DB_URL)
+//   .then(() => console.log("MongoDB Database connected"))
+//   .catch((error) => {
+//     console.error("MongoDB connection error:", error);
+//     process.exit(1);
+//   });
+
+
 import express from "express";
+import http from "http";
+import { Server } from "socket.io";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -190,15 +261,15 @@ import path from "path";
 import videoroutes from "./Routes/video.js";
 import userroutes from "./Routes/User.js";
 import commentroutes from "./Routes/comment.js";
-import videoStreamRoutes from "./Routes/videoStream.js"; // new streaming route
-import planRoutes from "./Routes/planRoutes.js"; // new plan upgrade routes
+import videoStreamRoutes from "./Routes/videoStream.js"; // streaming route
+import planRoutes from "./Routes/planRoutes.js"; // plan upgrade routes
 import convertRouter from "./Routes/convert.js"; // conversion route
 
 dotenv.config();
 
 const app = express();
 
-// Logging middleware: logs every incoming request.
+// Logging middleware
 app.use((req, res, next) => {
   console.log(`Incoming request: ${req.method} ${req.url}`);
   next();
@@ -227,12 +298,77 @@ app.use(videoStreamRoutes); // For streaming video files
 app.use("/plan", planRoutes); // For plan upgrade routes
 app.use("/convert", convertRouter); // For video conversion
 
+// Create HTTP server from Express app
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = http.createServer(app);
+
+// Set up Socket.IO signaling server on the same HTTP server
+const io = new Server(server, {
+  cors: {
+    origin: "*", // In production, restrict to your frontend domains
+    methods: ["GET", "POST"],
+  },
+});
+
+// Map to store channel names to socket IDs.
+// We'll use the channel name (from the user's DB record) as the key.
+const channelMap = new Map();
+
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  // When a client connects, they should send a 'register' event with their channel name.
+  socket.on("register", (channelName) => {
+    channelMap.set(channelName, socket.id);
+    console.log(`Channel "${channelName}" registered with socket id: ${socket.id}`);
+  });
+
+  // Relay offer: data contains { toChannel, fromChannel, offer }
+  socket.on("offer", (data) => {
+    const targetSocketId = channelMap.get(data.toChannel);
+    if (targetSocketId) {
+      io.to(targetSocketId).emit("offer", { fromChannel: data.fromChannel, offer: data.offer });
+      console.log(`Relayed offer from ${data.fromChannel} to ${data.toChannel}`);
+    } else {
+      console.warn(`No target socket for channel ${data.toChannel}`);
+    }
+  });
+
+  // Relay answer: data contains { toChannel, fromChannel, answer }
+  socket.on("answer", (data) => {
+    const targetSocketId = channelMap.get(data.toChannel);
+    if (targetSocketId) {
+      io.to(targetSocketId).emit("answer", { fromChannel: data.fromChannel, answer: data.answer });
+      console.log(`Relayed answer from ${data.fromChannel} to ${data.toChannel}`);
+    }
+  });
+
+  // Relay ICE candidates: data contains { toChannel, fromChannel, candidate }
+  socket.on("ice-candidate", (data) => {
+    const targetSocketId = channelMap.get(data.toChannel);
+    if (targetSocketId) {
+      io.to(targetSocketId).emit("ice-candidate", { fromChannel: data.fromChannel, candidate: data.candidate });
+      console.log(`Relayed ICE candidate from ${data.fromChannel} to ${data.toChannel}`);
+    }
+  });
+
+  // On disconnect, remove the socket from our channel mapping.
+  socket.on("disconnect", () => {
+    for (let [channel, id] of channelMap.entries()) {
+      if (id === socket.id) {
+        channelMap.delete(channel);
+        console.log(`Channel "${channel}" disconnected (socket id: ${socket.id})`);
+        break;
+      }
+    }
+  });
+});
+
+server.listen(PORT, () => {
   console.log(`Server running on Port ${PORT}`);
 });
 
-// Retrieve DB connection URL from environment variables
+// Retrieve the DB connection URL from environment variables
 const DB_URL = process.env.DB_URL;
 if (!DB_URL) {
   console.error("Error: DB_URL environment variable is not defined.");

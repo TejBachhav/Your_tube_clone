@@ -960,47 +960,269 @@
 // export default VideoCall;
 
 
+// /* eslint-disable no-unused-vars */
+// import React, { useState, useRef, useEffect, useMemo } from "react";
+// import io from "socket.io-client";
+// import { FFmpeg } from "@ffmpeg/ffmpeg";
+// import "./VideoCall.css";
+// import axios from "axios";
+
+// // Connect to the signaling server on port 5002
+// const socket = io("http://localhost:5002");
+
+// const VideoCall = ({ setVideoCallModal }) => {
+//   const localVideoRef = useRef(null);
+//   const remoteVideoRef = useRef(null);
+//   const [peerConnection, setPeerConnection] = useState(null);
+//   const [targetSocketId, setTargetSocketId] = useState(""); // Manually set target socket id
+
+//   // State for screen recording
+//   const [screenRecorder, setScreenRecorder] = useState(null);
+//   const [screenRecordedChunks, setScreenRecordedChunks] = useState([]);
+
+//   // FFmpeg setup (if needed later on client side for conversion, but here we offload conversion)
+//   const [ffmpegReady, setFfmpegReady] = useState(false);
+//   const ffmpeg = useMemo(() => new FFmpeg({ log: true }), []);
+
+//   useEffect(() => {
+//     const loadFfmpeg = async () => {
+//       try {
+//         await ffmpeg.load();
+//         setFfmpegReady(true);
+//         console.log("FFmpeg loaded successfully!");
+//       } catch (error) {
+//         console.error("Error loading FFmpeg:", error);
+//       }
+//     };
+//     loadFfmpeg();
+//   }, [ffmpeg]);
+
+//   // ICE configuration for RTCPeerConnection
+//   const configuration = useMemo(() => ({
+//     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+//   }), []);
+
+//   // Initialize RTCPeerConnection on mount.
+//   useEffect(() => {
+//     const pc = new RTCPeerConnection(configuration);
+//     setPeerConnection(pc);
+
+//     pc.onicecandidate = (event) => {
+//       if (event.candidate && targetSocketId) {
+//         socket.emit("ice-candidate", { to: targetSocketId, candidate: event.candidate });
+//       }
+//     };
+
+//     pc.ontrack = (event) => {
+//       if (remoteVideoRef.current) {
+//         remoteVideoRef.current.srcObject = event.streams[0];
+//       }
+//     };
+
+//     return () => {
+//       pc.close();
+//     };
+//   }, [configuration, targetSocketId]);
+
+//   // Listen for signaling messages
+//   useEffect(() => {
+//     socket.on("offer", async (data) => {
+//       console.log("Received offer from:", data.from);
+//       setTargetSocketId(data.from);
+//       if (peerConnection) {
+//         await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+//         const answer = await peerConnection.createAnswer();
+//         await peerConnection.setLocalDescription(answer);
+//         socket.emit("answer", { to: data.from, answer });
+//       }
+//     });
+
+//     socket.on("answer", async (data) => {
+//       console.log("Received answer from:", data.from);
+//       if (peerConnection) {
+//         await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+//       }
+//     });
+
+//     socket.on("ice-candidate", async (data) => {
+//       if (peerConnection && peerConnection.remoteDescription) {
+//         try {
+//           await peerConnection.addIceCandidate(data.candidate);
+//         } catch (error) {
+//           console.error("Error adding ICE candidate:", error);
+//         }
+//       } else {
+//         console.warn("Remote description not set; skipping ICE candidate addition");
+//       }
+//     });
+//   }, [peerConnection]);
+
+//   // Function to start a call (using camera stream for signaling purposes)
+//   const startCall = async () => {
+//     if (!targetSocketId) {
+//       alert("Please enter a target socket ID before starting a call.");
+//       return;
+//     }
+//     try {
+//       const localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+//       if (localVideoRef.current) {
+//         localVideoRef.current.srcObject = localStream;
+//       }
+//       localStream.getTracks().forEach((track) => {
+//         peerConnection.addTrack(track, localStream);
+//       });
+//       const offer = await peerConnection.createOffer();
+//       await peerConnection.setLocalDescription(offer);
+//       socket.emit("offer", { to: targetSocketId, offer });
+//     } catch (error) {
+//       console.error("Error starting call:", error);
+//     }
+//   };
+
+//   // Share screen using getDisplayMedia for signaling and preview
+//   const shareScreen = async () => {
+//     try {
+//       const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+//       screenStream.getTracks().forEach((track) => {
+//         peerConnection.addTrack(track, screenStream);
+//       });
+//       if (localVideoRef.current) {
+//         localVideoRef.current.srcObject = screenStream;
+//       }
+//     } catch (error) {
+//       console.error("Error sharing screen:", error);
+//     }
+//   };
+
+//   // Upload the recorded WebM file to the backend for conversion.
+//   const uploadConversion = async (webmBlob) => {
+//     const formData = new FormData();
+//     formData.append("video", webmBlob, "recording.webm");
+
+//     console.log("Uploading WebM for conversion...");
+//     try {
+//       const response = await axios.post("https://your-tube-clone-2c2e.onrender.com/convert", formData, {
+//         responseType: "blob",
+//       });
+//       const url = URL.createObjectURL(response.data);
+//       console.log("Converted MP4 URL:", url);
+//       const a = document.createElement("a");
+//       a.style.display = "none";
+//       a.href = url;
+//       a.download = "recorded_session.mp4";
+//       document.body.appendChild(a);
+//       a.click();
+//       window.URL.revokeObjectURL(url);
+//     } catch (error) {
+//       console.error("Error converting video on server:", error);
+//     }
+//   };
+
+//   // Start recording the screen.
+//   const startScreenRecording = async () => {
+//     try {
+//       const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+//       if (localVideoRef.current) {
+//         localVideoRef.current.srcObject = screenStream;
+//       }
+//       const options = { mimeType: "video/webm; codecs=vp8" };
+//       let recorder;
+//       try {
+//         recorder = new MediaRecorder(screenStream, options);
+//       } catch (e) {
+//         console.error("Screen MediaRecorder initialization failed with options", options, e);
+//         recorder = new MediaRecorder(screenStream);
+//       }
+//       setScreenRecordedChunks([]); // Clear previous recorded chunks
+//       recorder.ondataavailable = (event) => {
+//         if (event.data && event.data.size > 0) {
+//           setScreenRecordedChunks((prev) => [...prev, event.data]);
+//         }
+//       };
+//       recorder.onstop = async () => {
+//         console.log("Screen recording stopped");
+//         const webmBlob = new Blob(screenRecordedChunks, { type: options.mimeType });
+//         console.log("Screen-recorded WebM blob size:", webmBlob.size);
+//         if (webmBlob.size === 0) {
+//           console.error("Screen-recorded blob is empty. No data to convert.");
+//           return;
+//         }
+//         await uploadConversion(webmBlob);
+//         setScreenRecorder(null);
+//       };
+//       recorder.start();
+//       setScreenRecorder(recorder);
+//       console.log("Screen recording started");
+//     } catch (error) {
+//       console.error("Error starting screen recording:", error);
+//     }
+//   };
+
+//   const stopScreenRecording = () => {
+//     if (screenRecorder) {
+//       screenRecorder.stop();
+//     }
+//   };
+
+//   return (
+//     <div className="video-call-container">
+//       <div className="local-video">
+//         <video ref={localVideoRef} autoPlay playsInline muted />
+//         <div className="video-controls">
+//           <button onClick={startCall}>Start Call</button>
+//           <button onClick={shareScreen}>Share Screen</button>
+//           <button onClick={startScreenRecording}>Record Screen</button>
+//           <button onClick={stopScreenRecording}>Stop Screen Recording</button>
+//         </div>
+//       </div>
+//       <div className="remote-video">
+//         <video ref={remoteVideoRef} autoPlay playsInline />
+//       </div>
+//       <div className="target-socket-input">
+//         <label htmlFor="targetSocket">Target Socket ID:</label>
+//         <input
+//           id="targetSocket"
+//           type="text"
+//           value={targetSocketId}
+//           onChange={(e) => setTargetSocketId(e.target.value)}
+//           placeholder="Enter target socket ID"
+//         />
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default VideoCall;
+
+
+
 /* eslint-disable no-unused-vars */
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import io from "socket.io-client";
-import { FFmpeg } from "@ffmpeg/ffmpeg";
 import "./VideoCall.css";
 import axios from "axios";
 
-// Connect to the signaling server on port 5002
-const socket = io("http://localhost:5002");
+// Use environment variables; fallback to localhost for development.
+const SIGNALING_URL = process.env.REACT_APP_SIGNALING_URL || "http://localhost:5002";
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
+
+// Connect to the signaling server.
+const socket = io(SIGNALING_URL);
 
 const VideoCall = ({ setVideoCallModal }) => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const [peerConnection, setPeerConnection] = useState(null);
-  const [targetSocketId, setTargetSocketId] = useState(""); // Manually set target socket id
+  const [targetSocketId, setTargetSocketId] = useState(""); // Manually set target socket ID.
 
-  // State for screen recording
+  // State for screen recording.
   const [screenRecorder, setScreenRecorder] = useState(null);
   const [screenRecordedChunks, setScreenRecordedChunks] = useState([]);
 
-  // FFmpeg setup (if needed later on client side for conversion, but here we offload conversion)
-  const [ffmpegReady, setFfmpegReady] = useState(false);
-  const ffmpeg = useMemo(() => new FFmpeg({ log: true }), []);
-
-  useEffect(() => {
-    const loadFfmpeg = async () => {
-      try {
-        await ffmpeg.load();
-        setFfmpegReady(true);
-        console.log("FFmpeg loaded successfully!");
-      } catch (error) {
-        console.error("Error loading FFmpeg:", error);
-      }
-    };
-    loadFfmpeg();
-  }, [ffmpeg]);
-
-  // ICE configuration for RTCPeerConnection
-  const configuration = useMemo(() => ({
+  // ICE configuration for RTCPeerConnection.
+  const configuration = {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-  }), []);
+  };
 
   // Initialize RTCPeerConnection on mount.
   useEffect(() => {
@@ -1024,7 +1246,7 @@ const VideoCall = ({ setVideoCallModal }) => {
     };
   }, [configuration, targetSocketId]);
 
-  // Listen for signaling messages
+  // Listen for signaling messages.
   useEffect(() => {
     socket.on("offer", async (data) => {
       console.log("Received offer from:", data.from);
@@ -1057,7 +1279,7 @@ const VideoCall = ({ setVideoCallModal }) => {
     });
   }, [peerConnection]);
 
-  // Function to start a call (using camera stream for signaling purposes)
+  // Start call using camera stream (for signaling purposes only).
   const startCall = async () => {
     if (!targetSocketId) {
       alert("Please enter a target socket ID before starting a call.");
@@ -1079,7 +1301,7 @@ const VideoCall = ({ setVideoCallModal }) => {
     }
   };
 
-  // Share screen using getDisplayMedia for signaling and preview
+  // Share screen using getDisplayMedia.
   const shareScreen = async () => {
     try {
       const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
@@ -1098,10 +1320,9 @@ const VideoCall = ({ setVideoCallModal }) => {
   const uploadConversion = async (webmBlob) => {
     const formData = new FormData();
     formData.append("video", webmBlob, "recording.webm");
-
     console.log("Uploading WebM for conversion...");
     try {
-      const response = await axios.post("https://your-tube-clone-2c2e.onrender.com/convert", formData, {
+      const response = await axios.post(`${BACKEND_URL}/convert`, formData, {
         responseType: "blob",
       });
       const url = URL.createObjectURL(response.data);
@@ -1118,7 +1339,7 @@ const VideoCall = ({ setVideoCallModal }) => {
     }
   };
 
-  // Start recording the screen.
+  // Start screen recording.
   const startScreenRecording = async () => {
     try {
       const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
@@ -1133,7 +1354,8 @@ const VideoCall = ({ setVideoCallModal }) => {
         console.error("Screen MediaRecorder initialization failed with options", options, e);
         recorder = new MediaRecorder(screenStream);
       }
-      setScreenRecordedChunks([]); // Clear previous recorded chunks
+      // Clear previous recorded chunks
+      setScreenRecordedChunks([]);
       recorder.ondataavailable = (event) => {
         if (event.data && event.data.size > 0) {
           setScreenRecordedChunks((prev) => [...prev, event.data]);
@@ -1160,6 +1382,7 @@ const VideoCall = ({ setVideoCallModal }) => {
 
   const stopScreenRecording = () => {
     if (screenRecorder) {
+      console.log("Stopping screen recorder...");
       screenRecorder.stop();
     }
   };
