@@ -1202,37 +1202,45 @@ import io from "socket.io-client";
 import "./VideoCall.css";
 import axios from "axios";
 
-// Use environment variables; fallback to localhost if not set.
+// Use environment variables for the signaling and backend URLs.
 const SIGNALING_URL = process.env.REACT_APP_SIGNALING_URL || "https://your-tube-clone-2c2e.onrender.com";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://your-tube-clone-2c2e.onrender.com";
 
 // Connect to the signaling server.
 const socket = io(SIGNALING_URL);
 
-const VideoCall = ({ setVideoCallModal }) => {
+const VideoCall = ({ setVideoCallModal, currentUserEmail }) => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
-  // Use a ref to hold the peer connection so it's created only once.
+  // Use a ref to hold a single RTCPeerConnection instance.
   const peerConnectionRef = useRef(null);
-  const [targetSocketId, setTargetSocketId] = useState(""); // Manually set target socket ID.
+  // State for target user email.
+  const [targetEmail, setTargetEmail] = useState("");
 
   // State for screen recording.
   const [screenRecorder, setScreenRecorder] = useState(null);
   const [screenRecordedChunks, setScreenRecordedChunks] = useState([]);
 
-  // Memoize configuration so it doesn't change on each render.
-  const configuration = useMemo(() => ({
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-  }), []);
+  // Memoize ICE configuration.
+  const configuration = useMemo(
+    () => ({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    }),
+    []
+  );
 
-  // Initialize RTCPeerConnection only once.
+  // Initialize RTCPeerConnection once.
   useEffect(() => {
     if (!peerConnectionRef.current) {
       const pc = new RTCPeerConnection(configuration);
       peerConnectionRef.current = pc;
       pc.onicecandidate = (event) => {
-        if (event.candidate && targetSocketId) {
-          socket.emit("ice-candidate", { to: targetSocketId, candidate: event.candidate });
+        if (event.candidate && targetEmail) {
+          socket.emit("ice-candidate", {
+            toEmail: targetEmail,
+            fromEmail: currentUserEmail,
+            candidate: event.candidate,
+          });
         }
       };
       pc.ontrack = (event) => {
@@ -1247,23 +1255,28 @@ const VideoCall = ({ setVideoCallModal }) => {
         peerConnectionRef.current = null;
       }
     };
-  }, [configuration, targetSocketId]);
+  }, [configuration, targetEmail, currentUserEmail]);
 
   // Listen for signaling messages.
   useEffect(() => {
     socket.on("offer", async (data) => {
-      console.log("Received offer from:", data.from);
-      setTargetSocketId(data.from);
+      console.log("Received offer from:", data.fromEmail);
+      // Set the target email to the sender's email.
+      setTargetEmail(data.fromEmail);
       if (peerConnectionRef.current) {
         await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.offer));
         const answer = await peerConnectionRef.current.createAnswer();
         await peerConnectionRef.current.setLocalDescription(answer);
-        socket.emit("answer", { to: data.from, answer });
+        socket.emit("answer", {
+          toEmail: data.fromEmail,
+          fromEmail: currentUserEmail,
+          answer,
+        });
       }
     });
 
     socket.on("answer", async (data) => {
-      console.log("Received answer from:", data.from);
+      console.log("Received answer from:", data.fromEmail);
       if (peerConnectionRef.current) {
         await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.answer));
       }
@@ -1281,18 +1294,17 @@ const VideoCall = ({ setVideoCallModal }) => {
       }
     });
 
-    // Clean up socket listeners on unmount.
     return () => {
       socket.off("offer");
       socket.off("answer");
       socket.off("ice-candidate");
     };
-  }, []);
+  }, [currentUserEmail]);
 
   // Start call using camera stream (for signaling purposes).
   const startCall = async () => {
-    if (!targetSocketId) {
-      alert("Please enter a target socket ID before starting a call.");
+    if (!targetEmail) {
+      alert("Please enter the target user's email before starting a call.");
       return;
     }
     try {
@@ -1305,7 +1317,11 @@ const VideoCall = ({ setVideoCallModal }) => {
       });
       const offer = await peerConnectionRef.current.createOffer();
       await peerConnectionRef.current.setLocalDescription(offer);
-      socket.emit("offer", { to: targetSocketId, offer });
+      socket.emit("offer", {
+        toEmail: targetEmail,
+        fromEmail: currentUserEmail,
+        offer,
+      });
     } catch (error) {
       console.error("Error starting call:", error);
     }
@@ -1411,14 +1427,13 @@ const VideoCall = ({ setVideoCallModal }) => {
       <div className="remote-video">
         <video ref={remoteVideoRef} autoPlay playsInline />
       </div>
-      <div className="target-socket-input">
-        <label htmlFor="targetSocket">Target Socket ID:</label>
+      <div className="socket-info">
+        <p>Your Socket ID: {socket.id}</p>
         <input
-          id="targetSocket"
           type="text"
-          value={targetSocketId}
-          onChange={(e) => setTargetSocketId(e.target.value)}
-          placeholder="Enter target socket ID"
+          value={targetEmail}
+          onChange={(e) => setTargetEmail(e.target.value)}
+          placeholder="Enter target user email"
         />
       </div>
     </div>
@@ -1426,3 +1441,4 @@ const VideoCall = ({ setVideoCallModal }) => {
 };
 
 export default VideoCall;
+

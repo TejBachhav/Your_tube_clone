@@ -310,7 +310,7 @@ const io = new Server(server, {
   },
 });
 
-// Map to store user email IDs to socket IDs.
+// Map to store user emails to socket IDs.
 const userMap = new Map();
 
 io.on("connection", (socket) => {
@@ -326,32 +326,32 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Relay offer: data contains { toemail, fromemail, offer }
+  // Relay offer: data contains { toEmail, fromEmail, offer }
   socket.on("offer", (data) => {
-    const targetSocketId = userMap.get(data.toemail);
+    const targetSocketId = userMap.get(data.toEmail);
     if (targetSocketId) {
-      io.to(targetSocketId).emit("offer", { fromemail: data.fromemail, offer: data.offer });
-      console.log(`Relayed offer from ${data.fromemail} to ${data.toemail}`);
+      io.to(targetSocketId).emit("offer", { fromEmail: data.fromEmail, offer: data.offer });
+      console.log(`Relayed offer from ${data.fromEmail} to ${data.toEmail}`);
     } else {
-      console.warn(`No target socket for user ${data.toemail}`);
+      console.warn(`No target socket for user ${data.toEmail}`);
     }
   });
 
-  // Relay answer: data contains { toemail, fromemail, answer }
+  // Relay answer: data contains { toEmail, fromEmail, answer }
   socket.on("answer", (data) => {
-    const targetSocketId = userMap.get(data.toemail);
+    const targetSocketId = userMap.get(data.toEmail);
     if (targetSocketId) {
-      io.to(targetSocketId).emit("answer", { fromemail: data.fromemail, answer: data.answer });
-      console.log(`Relayed answer from ${data.fromemail} to ${data.toemail}`);
+      io.to(targetSocketId).emit("answer", { fromEmail: data.fromEmail, answer: data.answer });
+      console.log(`Relayed answer from ${data.fromEmail} to ${data.toEmail}`);
     }
   });
 
-  // Relay ICE candidates: data contains { toemail, fromemail, candidate }
+  // Relay ICE candidates: data contains { toEmail, fromEmail, candidate }
   socket.on("ice-candidate", (data) => {
-    const targetSocketId = userMap.get(data.toemail);
+    const targetSocketId = userMap.get(data.toEmail);
     if (targetSocketId) {
-      io.to(targetSocketId).emit("ice-candidate", { fromemail: data.fromemail, candidate: data.candidate });
-      console.log(`Relayed ICE candidate from ${data.fromemail} to ${data.toemail}`);
+      io.to(targetSocketId).emit("ice-candidate", { fromEmail: data.fromEmail, candidate: data.candidate });
+      console.log(`Relayed ICE candidate from ${data.fromEmail} to ${data.toEmail}`);
     }
   });
 
@@ -385,5 +385,6 @@ mongoose.connect(DB_URL)
     console.error("MongoDB connection error:", error);
     process.exit(1);
   });
+
 
 
