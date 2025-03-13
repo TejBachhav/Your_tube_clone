@@ -310,53 +310,53 @@ const io = new Server(server, {
   },
 });
 
-// Map to store user Names to socket IDs.
+// Map to store user names to socket IDs.
 const userMap = new Map();
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // Register event: client sends their Name (from DB)
-  socket.on("register", (Name) => {
-    userMap.set(Name, socket.id);
-    console.log(`User "${Name}" registered with socket id: ${socket.id}`);
+  // Register event: client sends their name (from DB)
+  socket.on("register", (name) => {
+    userMap.set(name, socket.id);
+    console.log(`User "${name}" registered with socket id: ${socket.id}`);
   });
 
-  // Relay offer: data contains { toName, fromName, offer }
+  // Relay offer: data contains { toname, fromname, offer }
   socket.on("offer", (data) => {
-    const targetSocketId = userMap.get(data.toName);
+    const targetSocketId = userMap.get(data.toname);
     if (targetSocketId) {
-      io.to(targetSocketId).emit("offer", { fromName: data.fromName, offer: data.offer });
-      console.log(`Relayed offer from ${data.fromName} to ${data.toName}`);
+      io.to(targetSocketId).emit("offer", { fromname: data.fromname, offer: data.offer });
+      console.log(`Relayed offer from ${data.fromname} to ${data.toname}`);
     } else {
-      console.warn(`No target socket for user ${data.toName}`);
+      console.warn(`No target socket for user ${data.toname}`);
     }
   });
 
-  // Relay answer: data contains { toName, fromName, answer }
+  // Relay answer: data contains { toname, fromname, answer }
   socket.on("answer", (data) => {
-    const targetSocketId = userMap.get(data.toName);
+    const targetSocketId = userMap.get(data.toname);
     if (targetSocketId) {
-      io.to(targetSocketId).emit("answer", { fromName: data.fromName, answer: data.answer });
-      console.log(`Relayed answer from ${data.fromName} to ${data.toName}`);
+      io.to(targetSocketId).emit("answer", { fromname: data.fromname, answer: data.answer });
+      console.log(`Relayed answer from ${data.fromname} to ${data.toname}`);
     }
   });
 
-  // Relay ICE candidates: data contains { toName, fromName, candidate }
+  // Relay ICE candidates: data contains { toname, fromname, candidate }
   socket.on("ice-candidate", (data) => {
-    const targetSocketId = userMap.get(data.toName);
+    const targetSocketId = userMap.get(data.toname);
     if (targetSocketId) {
-      io.to(targetSocketId).emit("ice-candidate", { fromName: data.fromName, candidate: data.candidate });
-      console.log(`Relayed ICE candidate from ${data.fromName} to ${data.toName}`);
+      io.to(targetSocketId).emit("ice-candidate", { fromname: data.fromname, candidate: data.candidate });
+      console.log(`Relayed ICE candidate from ${data.fromname} to ${data.toname}`);
     }
   });
 
   // On disconnect, remove the socket from our user mapping.
   socket.on("disconnect", () => {
-    for (let [Name, id] of userMap.entries()) {
+    for (let [name, id] of userMap.entries()) {
       if (id === socket.id) {
-        userMap.delete(Name);
-        console.log(`User "${Name}" disconnected (socket id: ${socket.id})`);
+        userMap.delete(name);
+        console.log(`User "${name}" disconnected (socket id: ${socket.id})`);
         break;
       }
     }
