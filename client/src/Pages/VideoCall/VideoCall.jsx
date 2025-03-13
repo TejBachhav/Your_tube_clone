@@ -1197,14 +1197,14 @@
 
 
 /* eslint-disable no-unused-vars */
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import io from "socket.io-client";
 import "./VideoCall.css";
 import axios from "axios";
 
-// Use environment variables; fallback to localhost for development.
-const SIGNALING_URL = process.env.REACT_APP_SIGNALING_URL || "http://localhost:5002";
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
+// Use environment variables; fallback to localhost if not set.
+const SIGNALING_URL = process.env.REACT_APP_SIGNALING_URL || "https://your-tube-clone-2c2e.onrender.com";
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://your-tube-clone-2c2e.onrender.com";
 
 // Connect to the signaling server.
 const socket = io(SIGNALING_URL);
@@ -1212,37 +1212,40 @@ const socket = io(SIGNALING_URL);
 const VideoCall = ({ setVideoCallModal }) => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
-  const [peerConnection, setPeerConnection] = useState(null);
+  // Use a ref to hold the peer connection so it's created only once.
+  const peerConnectionRef = useRef(null);
   const [targetSocketId, setTargetSocketId] = useState(""); // Manually set target socket ID.
 
   // State for screen recording.
   const [screenRecorder, setScreenRecorder] = useState(null);
   const [screenRecordedChunks, setScreenRecordedChunks] = useState([]);
 
-  // ICE configuration for RTCPeerConnection.
-  const configuration = {
+  // Memoize configuration so it doesn't change on each render.
+  const configuration = useMemo(() => ({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-  };
+  }), []);
 
-  // Initialize RTCPeerConnection on mount.
+  // Initialize RTCPeerConnection only once.
   useEffect(() => {
-    const pc = new RTCPeerConnection(configuration);
-    setPeerConnection(pc);
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate && targetSocketId) {
-        socket.emit("ice-candidate", { to: targetSocketId, candidate: event.candidate });
-      }
-    };
-
-    pc.ontrack = (event) => {
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = event.streams[0];
-      }
-    };
-
+    if (!peerConnectionRef.current) {
+      const pc = new RTCPeerConnection(configuration);
+      peerConnectionRef.current = pc;
+      pc.onicecandidate = (event) => {
+        if (event.candidate && targetSocketId) {
+          socket.emit("ice-candidate", { to: targetSocketId, candidate: event.candidate });
+        }
+      };
+      pc.ontrack = (event) => {
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = event.streams[0];
+        }
+      };
+    }
     return () => {
-      pc.close();
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+        peerConnectionRef.current = null;
+      }
     };
   }, [configuration, targetSocketId]);
 
@@ -1251,25 +1254,25 @@ const VideoCall = ({ setVideoCallModal }) => {
     socket.on("offer", async (data) => {
       console.log("Received offer from:", data.from);
       setTargetSocketId(data.from);
-      if (peerConnection) {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
+      if (peerConnectionRef.current) {
+        await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await peerConnectionRef.current.createAnswer();
+        await peerConnectionRef.current.setLocalDescription(answer);
         socket.emit("answer", { to: data.from, answer });
       }
     });
 
     socket.on("answer", async (data) => {
       console.log("Received answer from:", data.from);
-      if (peerConnection) {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+      if (peerConnectionRef.current) {
+        await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.answer));
       }
     });
 
     socket.on("ice-candidate", async (data) => {
-      if (peerConnection && peerConnection.remoteDescription) {
+      if (peerConnectionRef.current && peerConnectionRef.current.remoteDescription) {
         try {
-          await peerConnection.addIceCandidate(data.candidate);
+          await peerConnectionRef.current.addIceCandidate(data.candidate);
         } catch (error) {
           console.error("Error adding ICE candidate:", error);
         }
@@ -1277,9 +1280,16 @@ const VideoCall = ({ setVideoCallModal }) => {
         console.warn("Remote description not set; skipping ICE candidate addition");
       }
     });
-  }, [peerConnection]);
 
-  // Start call using camera stream (for signaling purposes only).
+    // Clean up socket listeners on unmount.
+    return () => {
+      socket.off("offer");
+      socket.off("answer");
+      socket.off("ice-candidate");
+    };
+  }, []);
+
+  // Start call using camera stream (for signaling purposes).
   const startCall = async () => {
     if (!targetSocketId) {
       alert("Please enter a target socket ID before starting a call.");
@@ -1291,10 +1301,10 @@ const VideoCall = ({ setVideoCallModal }) => {
         localVideoRef.current.srcObject = localStream;
       }
       localStream.getTracks().forEach((track) => {
-        peerConnection.addTrack(track, localStream);
+        peerConnectionRef.current.addTrack(track, localStream);
       });
-      const offer = await peerConnection.createOffer();
-      await peerConnection.setLocalDescription(offer);
+      const offer = await peerConnectionRef.current.createOffer();
+      await peerConnectionRef.current.setLocalDescription(offer);
       socket.emit("offer", { to: targetSocketId, offer });
     } catch (error) {
       console.error("Error starting call:", error);
@@ -1306,7 +1316,7 @@ const VideoCall = ({ setVideoCallModal }) => {
     try {
       const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
       screenStream.getTracks().forEach((track) => {
-        peerConnection.addTrack(track, screenStream);
+        peerConnectionRef.current.addTrack(track, screenStream);
       });
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = screenStream;

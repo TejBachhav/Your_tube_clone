@@ -310,54 +310,53 @@ const io = new Server(server, {
   },
 });
 
-// Map to store channel names to socket IDs.
-// We'll use the channel name (from the user's DB record) as the key.
-const channelMap = new Map();
+// Map to store user Names to socket IDs.
+const userMap = new Map();
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // When a client connects, they should send a 'register' event with their channel name.
-  socket.on("register", (channelName) => {
-    channelMap.set(channelName, socket.id);
-    console.log(`Channel "${channelName}" registered with socket id: ${socket.id}`);
+  // Register event: client sends their Name (from DB)
+  socket.on("register", (Name) => {
+    userMap.set(Name, socket.id);
+    console.log(`User "${Name}" registered with socket id: ${socket.id}`);
   });
 
-  // Relay offer: data contains { toChannel, fromChannel, offer }
+  // Relay offer: data contains { toName, fromName, offer }
   socket.on("offer", (data) => {
-    const targetSocketId = channelMap.get(data.toChannel);
+    const targetSocketId = userMap.get(data.toName);
     if (targetSocketId) {
-      io.to(targetSocketId).emit("offer", { fromChannel: data.fromChannel, offer: data.offer });
-      console.log(`Relayed offer from ${data.fromChannel} to ${data.toChannel}`);
+      io.to(targetSocketId).emit("offer", { fromName: data.fromName, offer: data.offer });
+      console.log(`Relayed offer from ${data.fromName} to ${data.toName}`);
     } else {
-      console.warn(`No target socket for channel ${data.toChannel}`);
+      console.warn(`No target socket for user ${data.toName}`);
     }
   });
 
-  // Relay answer: data contains { toChannel, fromChannel, answer }
+  // Relay answer: data contains { toName, fromName, answer }
   socket.on("answer", (data) => {
-    const targetSocketId = channelMap.get(data.toChannel);
+    const targetSocketId = userMap.get(data.toName);
     if (targetSocketId) {
-      io.to(targetSocketId).emit("answer", { fromChannel: data.fromChannel, answer: data.answer });
-      console.log(`Relayed answer from ${data.fromChannel} to ${data.toChannel}`);
+      io.to(targetSocketId).emit("answer", { fromName: data.fromName, answer: data.answer });
+      console.log(`Relayed answer from ${data.fromName} to ${data.toName}`);
     }
   });
 
-  // Relay ICE candidates: data contains { toChannel, fromChannel, candidate }
+  // Relay ICE candidates: data contains { toName, fromName, candidate }
   socket.on("ice-candidate", (data) => {
-    const targetSocketId = channelMap.get(data.toChannel);
+    const targetSocketId = userMap.get(data.toName);
     if (targetSocketId) {
-      io.to(targetSocketId).emit("ice-candidate", { fromChannel: data.fromChannel, candidate: data.candidate });
-      console.log(`Relayed ICE candidate from ${data.fromChannel} to ${data.toChannel}`);
+      io.to(targetSocketId).emit("ice-candidate", { fromName: data.fromName, candidate: data.candidate });
+      console.log(`Relayed ICE candidate from ${data.fromName} to ${data.toName}`);
     }
   });
 
-  // On disconnect, remove the socket from our channel mapping.
+  // On disconnect, remove the socket from our user mapping.
   socket.on("disconnect", () => {
-    for (let [channel, id] of channelMap.entries()) {
+    for (let [Name, id] of userMap.entries()) {
       if (id === socket.id) {
-        channelMap.delete(channel);
-        console.log(`Channel "${channel}" disconnected (socket id: ${socket.id})`);
+        userMap.delete(Name);
+        console.log(`User "${Name}" disconnected (socket id: ${socket.id})`);
         break;
       }
     }
@@ -382,3 +381,4 @@ mongoose.connect(DB_URL)
     console.error("MongoDB connection error:", error);
     process.exit(1);
   });
+
