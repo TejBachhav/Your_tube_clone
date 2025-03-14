@@ -176,7 +176,7 @@
     border-radius: 0.1rem;
   }
   
-  /* New Plan Button Styles */
+
   .plan-button {
     margin-left: 20px;
     padding: 6px 12px;
@@ -206,7 +206,6 @@
     text-decoration: underline;
   }
   
-  /* Video Call Button Styles */
   .video-call-button {
     margin-left: 20px;
     padding: 6px 12px;
