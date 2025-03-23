@@ -362,30 +362,45 @@
 }
 
 /* Responsive adjustments for mobile devices */
-/* Navbar.css */
-@media (max-width: 768px) {
+/* Add at the bottom of Navbar.css or a global file */
+@media (max-width: 600px) {
+  /* Let items wrap onto a new line if needed */
   .Container_Navbar {
-    flex-wrap: wrap; /* Let items move to the next line if needed */
-    padding: 0.3rem;
+    flex-wrap: wrap;
   }
 
-  /* If the sign-in or plan upgrade buttons are too wide, shrink them */
-  .Auth_Btn,
-  .plan-button,
+  /* Make the "CALL" and "SILVER" text shorter or hidden */
   .video-call-button {
     font-size: 0.8rem;
-    padding: 0.3rem 0.5rem;
-    margin-left: 5px;
+    padding: 4px 6px;
+  }
+  /* If you want to hide the "CALL" label entirely: */
+  .video-call-button::after {
+    content: "C";  /* or an icon, or just remove the text entirely */
+  }
+  .video-call-button span {
+    display: none; /* hides the second line of text if you had it */
   }
 
-  /* The "CALL", "SILVER", "UPGRADE" text might be too wide. 
-     If you need them smaller or hidden, you can do something like: */
-  .video-call-button span,
-  .plan-upgrade-text {
-    display: none; /* This hides the second line of text if you want */
+  .plan-button {
+    font-size: 0.8rem;
+    padding: 4px 6px;
+  }
+  /* If you want to hide "SILVER" text entirely: */
+  .plan-button::after {
+    content: "S"; /* or an icon */
+  }
+  .plan-label, .plan-upgrade-text {
+    display: none;
   }
 
-  /* The search bar can shrink or go full width */
+  /* If the sign-in or other buttons are too large, shrink them too */
+  .Auth_Btn {
+    padding: 4px 6px;
+    font-size: 0.8rem;
+  }
+
+  /* Possibly shrink the search bar */
   .SearchBar_Container {
     width: 100%;
     margin: 0.5rem 0;
@@ -396,6 +411,16 @@
     width: 80%;
     font-size: 0.9rem;
   }
+  .navigation_Home {
+    font-size: 0.8rem;
+    padding: 0.3rem;
+    overflow-x: auto;
+  }
+  .btn_nav_home {
+    padding: 0.3rem 0.5rem;
+    margin: 0.3rem;
+  }
 }
+
 
 
