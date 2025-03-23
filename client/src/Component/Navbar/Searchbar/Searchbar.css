@@ -97,7 +97,7 @@
   /* Searchbar.css (Add at the bottom) */
 @media (max-width: 768px) {
   .SearchBar_Container {
-    flex-direction: column;
+    flex-direction: box;
     margin: 0.5rem;
     width: auto;
     height: auto;
