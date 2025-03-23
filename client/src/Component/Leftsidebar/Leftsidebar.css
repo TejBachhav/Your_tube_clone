@@ -165,23 +165,23 @@
   }
   
   /* Responsive adjustments for mobile devices */
-  /* Leftsidebar.css (Add at the bottom) */
+/* Leftsidebar.css (or a global media query file) */
 @media (max-width: 768px) {
-  /* Make the sidebar narrower */
   .container_leftSidebar {
-    width: 50px; /* or any narrower width you prefer */
-    overflow-y: auto;
+    /* Option 1: Make it narrower, keep icons only */
+    width: 50px; /* or 60px, etc. */
+    overflow: auto;
   }
-
-  /* Hide or shrink the text so only icons remain */
   .icon_sidebar_div .text_sidebar_icon {
-    display: none; /* hides text, leaving icons only */
+    display: none; /* Hide text, keep only icons */
   }
 
-  /* Adjust padding or margin on the icon div */
-  .icon_sidebar_div {
-    padding: 0.3rem; 
+  /* If you want to completely hide the sidebar, do this instead:
+  .container_leftSidebar {
+    display: none;
   }
+  */
 }
+
 
   

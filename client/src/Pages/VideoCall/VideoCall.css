@@ -118,12 +118,12 @@
   /* Mobile responsive adjustments */
   @media (max-width: 768px) {
     .video-call-container {
-      flex-direction: column;
-      padding: 10px;
+      flex-direction: column; /* stack them vertically */
+      align-items: center;
     }
-    .local-video,
-    .remote-video {
+    .local-video, .remote-video {
       width: 100%;
+      margin-bottom: 1rem;
     }
     .video-controls {
       flex-wrap: wrap;

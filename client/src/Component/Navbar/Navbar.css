@@ -362,32 +362,40 @@
 }
 
 /* Responsive adjustments for mobile devices */
-/* Navbar.css (Add at the bottom) */
+/* Navbar.css */
 @media (max-width: 768px) {
-  /* Adjust the main container to use less horizontal space */
   .Container_Navbar {
-    padding: 0 0.5rem; 
-  }
-
-  /* Shrink or hide certain elements if needed */
-  .SearchBar_Container {
-    width: auto; 
-    margin: 0.5rem 0;
-    /* Possibly reduce the font-size or hide extra elements if it's too crowded */
-  }
-
-  /* Make the sign-in button smaller */
-  .Auth_Btn {
+    flex-wrap: wrap; /* Let items move to the next line if needed */
     padding: 0.3rem;
-    font-size: 0.9rem;
   }
 
-  /* If you want the plan button or video-call button smaller, do similarly */
+  /* If the sign-in or plan upgrade buttons are too wide, shrink them */
+  .Auth_Btn,
   .plan-button,
   .video-call-button {
-    margin-left: 10px; 
-    padding: 4px 8px;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
+    padding: 0.3rem 0.5rem;
+    margin-left: 5px;
+  }
+
+  /* The "CALL", "SILVER", "UPGRADE" text might be too wide. 
+     If you need them smaller or hidden, you can do something like: */
+  .video-call-button span,
+  .plan-upgrade-text {
+    display: none; /* This hides the second line of text if you want */
+  }
+
+  /* The search bar can shrink or go full width */
+  .SearchBar_Container {
+    width: 100%;
+    margin: 0.5rem 0;
+    display: flex;
+    justify-content: center;
+  }
+  .iBox_SearchBar {
+    width: 80%;
+    font-size: 0.9rem;
   }
 }
+
 

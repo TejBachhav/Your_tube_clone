@@ -1,4 +1,4 @@
-/* .container3_chanel{
+.container3_chanel{
     border-bottom: 3px solid rgba(1,26,96,0.692);
     padding: 0.5rem;
     color: whitesmoke;
@@ -44,10 +44,10 @@
 .uploadbtn_chanel:hover,.editbtn_chanel:hover{
 border: 2px solid;
 color: rgb(231,140,14);
-} */
+}
 
 
-.navigation_Home {
+/* .navigation_Home {
     color: white;
     background-color: rgb(37,37,37);
     position: sticky;
@@ -65,7 +65,7 @@ color: rgb(231,140,14);
 }
 .btn_nav_home:hover {
     background-color: rgb(128,128,128);
-}
+} */
 
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
