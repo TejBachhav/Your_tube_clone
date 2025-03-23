@@ -1,4 +1,4 @@
-.navigation_Home{
+/* .navigation_Home{
     color: white;
     background-color: rgb(37,37,37);
     position: sticky;
@@ -16,4 +16,32 @@
 }
 .btn_nav_home:hover{
     background-color: rgb(128,128,128);
+} */
+
+.container_libraryPage {
+    border-bottom: 1px solid grey;
+    padding: 1rem 2rem;
+    color: aliceblue;
+}
+.title_container_LibraryPage {
+    margin: 0.5rem 4rem;
+}
+.title_container_LibraryPage b {
+    margin: auto 0.5rem;
+    padding: auto 0.5rem;
+    font-size: medium;
+    color: #ffffff;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .container_libraryPage {
+    padding: 1rem;
+  }
+  .title_container_LibraryPage {
+    margin: 0.5rem 1rem;
+  }
+  .title_container_LibraryPage b {
+    font-size: small;
+  }
 }

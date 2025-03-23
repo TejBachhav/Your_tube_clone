@@ -1,4 +1,4 @@
-.container_libraryPage{
+/* .container_libraryPage{
     border-bottom:1px solid grey ;
     padding: 1rem 2rem;
     color: aliceblue;
@@ -19,4 +19,22 @@
     margin: 0;
     max-height: 80vh;
     overflow-y: auto;
+} */
+
+.container_videoList_LibraryPage {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    margin: 0;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .container_videoList_LibraryPage {
+    flex-direction: column;
+    align-items: center;
+    max-height: none;
+  }
 }

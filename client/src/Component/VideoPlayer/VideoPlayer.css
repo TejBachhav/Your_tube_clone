@@ -1,4 +1,4 @@
-.video-player-container {
+/* .video-player-container {
     position: relative;
     max-width: 100%;
     margin: 0 auto;
@@ -26,5 +26,50 @@
     font-size: 1rem;
     border: 1px solid #ccc;
     border-radius: 4px;
+  }
+   */
+
+   .video-player-container {
+    position: relative;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  
+  .player-loading {
+    text-align: center;
+    padding: 20px;
+    font-size: 1.2rem;
+    color: #666;
+  }
+  
+  .quality-select-container {
+    margin-top: 10px;
+    text-align: center;
+  }
+  
+  .quality-select-container label {
+    font-size: 1rem;
+    margin-right: 8px;
+  }
+  
+  .quality-select-container select {
+    padding: 6px 8px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  /* Responsive adjustments for mobile devices */
+  @media (max-width: 768px) {
+    .video-player-container {
+      width: 100%;
+    }
+    .quality-select-container label,
+    .quality-select-container select {
+      font-size: 0.9rem;
+    }
+    .quality-select-container select {
+      width: 100%;
+    }
   }
   

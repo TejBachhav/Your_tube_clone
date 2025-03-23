@@ -1708,13 +1708,302 @@
 
 // export default VideoCall;
 
+// /* eslint-disable no-unused-vars */
+// import React, { useState, useRef, useEffect, useMemo } from "react";
+// import io from "socket.io-client";
+// import "./VideoCall.css";
+// import axios from "axios";
+
+// // Use environment variables for URLs; fallback values for development.
+// const SIGNALING_URL = process.env.REACT_APP_SIGNALING_URL || "https://your-tube-clone-2c2e.onrender.com";
+// const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://your-tube-clone-2c2e.onrender.com";
+
+// // Connect to the signaling server.
+// const socket = io(SIGNALING_URL);
+
+// const VideoCall = ({ setVideoCallModal, currentUserEmail }) => {
+//   const localVideoRef = useRef(null);
+//   const remoteVideoRef = useRef(null);
+//   const peerConnectionRef = useRef(null);
+//   const [targetEmail, setTargetEmail] = useState("");
+
+//   // Screen recording state (for screen recording only).
+//   const [screenRecorder, setScreenRecorder] = useState(null);
+//   const [screenRecordedChunks, setScreenRecordedChunks] = useState([]);
+
+//   // Determine the current user's email. Fallback to localStorage if prop is missing.
+//   const userEmail =
+//     currentUserEmail ||
+//     (localStorage.getItem("Profile") && JSON.parse(localStorage.getItem("Profile")).result?.email) ||
+//     "";
+
+//   // Log the current user email and socket connection status.
+//   useEffect(() => {
+//     console.log("Current user email:", userEmail || "Not available");
+//     console.log("Socket connected:", socket.connected);
+//   }, [userEmail]);
+
+//   // Register current user email on mount.
+//   useEffect(() => {
+//     if (userEmail) {
+//       socket.emit("register", userEmail);
+//       console.log(`Registered with signaling server as: ${userEmail}`);
+//     } else {
+//       console.warn("No current user email to register!");
+//     }
+//   }, [userEmail]);
+
+//   // Memoize ICE configuration.
+//   const configuration = useMemo(
+//     () => ({
+//       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+//     }),
+//     []
+//   );
+
+//   // Initialize a single RTCPeerConnection.
+//   useEffect(() => {
+//     if (!peerConnectionRef.current) {
+//       const pc = new RTCPeerConnection(configuration);
+//       peerConnectionRef.current = pc;
+
+//       pc.onicecandidate = (event) => {
+//         if (event.candidate && targetEmail && userEmail) {
+//           socket.emit("ice-candidate", {
+//             toEmail: targetEmail,
+//             fromEmail: userEmail,
+//             candidate: event.candidate,
+//           });
+//           console.log(`ICE candidate sent from ${userEmail} to ${targetEmail}`);
+//         }
+//       };
+
+//       pc.ontrack = (event) => {
+//         if (remoteVideoRef.current) {
+//           remoteVideoRef.current.srcObject = event.streams[0];
+//           console.log("Remote stream set.");
+//         }
+//       };
+//     }
+//     return () => {
+//       if (peerConnectionRef.current) {
+//         peerConnectionRef.current.close();
+//         peerConnectionRef.current = null;
+//       }
+//     };
+//   }, [configuration, targetEmail, userEmail]);
+
+//   // Listen for signaling messages.
+//   useEffect(() => {
+//     socket.on("offer", async (data) => {
+//       console.log("Received offer from:", data.fromEmail);
+//       // Set targetEmail to the sender's email.
+//       setTargetEmail(data.fromEmail);
+//       if (peerConnectionRef.current) {
+//         try {
+//           await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.offer));
+//           const answer = await peerConnectionRef.current.createAnswer();
+//           await peerConnectionRef.current.setLocalDescription(answer);
+//           if (!userEmail) {
+//             console.warn("User email is missing; cannot send answer.");
+//           }
+//           socket.emit("answer", {
+//             toEmail: data.fromEmail,
+//             fromEmail: userEmail || "unknown",
+//             answer,
+//           });
+//           console.log(`Sent answer from ${userEmail} to ${data.fromEmail}`);
+//         } catch (err) {
+//           console.error("Error processing offer:", err);
+//         }
+//       }
+//     });
+
+//     socket.on("answer", async (data) => {
+//       console.log("Received answer from:", data.fromEmail);
+//       if (peerConnectionRef.current) {
+//         try {
+//           await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.answer));
+//         } catch (err) {
+//           console.error("Error processing answer:", err);
+//         }
+//       }
+//     });
+
+//     socket.on("ice-candidate", async (data) => {
+//       if (peerConnectionRef.current && peerConnectionRef.current.remoteDescription) {
+//         try {
+//           await peerConnectionRef.current.addIceCandidate(data.candidate);
+//           console.log("Added ICE candidate from:", data.fromEmail);
+//         } catch (error) {
+//           console.error("Error adding ICE candidate:", error);
+//         }
+//       } else {
+//         console.warn("Remote description not set; skipping ICE candidate addition");
+//       }
+//     });
+
+//     return () => {
+//       socket.off("offer");
+//       socket.off("answer");
+//       socket.off("ice-candidate");
+//     };
+//   }, [userEmail]);
+
+//   // Start call using camera stream.
+//   const startCall = async () => {
+//     if (!targetEmail) {
+//       alert("Please enter the target user's email before starting a call.");
+//       return;
+//     }
+//     if (!userEmail) {
+//       alert("Current user email is not available.");
+//       return;
+//     }
+//     try {
+//       const localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+//       if (localVideoRef.current) {
+//         localVideoRef.current.srcObject = localStream;
+//       }
+//       localStream.getTracks().forEach((track) => {
+//         peerConnectionRef.current.addTrack(track, localStream);
+//       });
+//       const offer = await peerConnectionRef.current.createOffer();
+//       await peerConnectionRef.current.setLocalDescription(offer);
+//       socket.emit("offer", {
+//         toEmail: targetEmail,
+//         fromEmail: userEmail,
+//         offer,
+//       });
+//       console.log(`Offer sent from ${userEmail} to ${targetEmail}`);
+//     } catch (error) {
+//       console.error("Error starting call:", error);
+//     }
+//   };
+
+//   // Share screen using getDisplayMedia.
+//   const shareScreen = async () => {
+//     try {
+//       const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+//       screenStream.getTracks().forEach((track) => {
+//         peerConnectionRef.current.addTrack(track, screenStream);
+//       });
+//       if (localVideoRef.current) {
+//         localVideoRef.current.srcObject = screenStream;
+//       }
+//       console.log("Screen shared.");
+//     } catch (error) {
+//       console.error("Error sharing screen:", error);
+//     }
+//   };
+
+//   // Upload recorded WebM to the backend for conversion.
+//   const uploadConversion = async (webmBlob) => {
+//     const formData = new FormData();
+//     formData.append("video", webmBlob, "recording.webm");
+//     console.log("Uploading WebM for conversion...");
+//     try {
+//       const response = await axios.post(`${BACKEND_URL}/convert`, formData, {
+//         responseType: "blob",
+//       });
+//       const url = URL.createObjectURL(response.data);
+//       console.log("Converted MP4 URL:", url);
+//       const a = document.createElement("a");
+//       a.style.display = "none";
+//       a.href = url;
+//       a.download = "recorded_session.mp4";
+//       document.body.appendChild(a);
+//       a.click();
+//       window.URL.revokeObjectURL(url);
+//     } catch (error) {
+//       console.error("Error converting video on server:", error);
+//     }
+//   };
+
+//   // Start screen recording.
+//   const startScreenRecording = async () => {
+//     try {
+//       const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+//       if (localVideoRef.current) {
+//         localVideoRef.current.srcObject = screenStream;
+//       }
+//       const options = { mimeType: "video/webm; codecs=vp8" };
+//       let recorder;
+//       try {
+//         recorder = new MediaRecorder(screenStream, options);
+//       } catch (e) {
+//         console.error("Screen MediaRecorder initialization failed with options", options, e);
+//         recorder = new MediaRecorder(screenStream);
+//       }
+//       // Clear previous recorded chunks.
+//       setScreenRecordedChunks([]);
+//       recorder.ondataavailable = (event) => {
+//         if (event.data && event.data.size > 0) {
+//           setScreenRecordedChunks((prev) => [...prev, event.data]);
+//         }
+//       };
+//       recorder.onstop = async () => {
+//         console.log("Screen recording stopped");
+//         const webmBlob = new Blob(screenRecordedChunks, { type: options.mimeType });
+//         console.log("Screen-recorded WebM blob size:", webmBlob.size);
+//         if (webmBlob.size === 0) {
+//           console.error("Screen-recorded blob is empty. No data to convert.");
+//           return;
+//         }
+//         await uploadConversion(webmBlob);
+//         setScreenRecorder(null);
+//       };
+//       recorder.start();
+//       setScreenRecorder(recorder);
+//       console.log("Screen recording started");
+//     } catch (error) {
+//       console.error("Error starting screen recording:", error);
+//     }
+//   };
+
+//   const stopScreenRecording = () => {
+//     if (screenRecorder) {
+//       console.log("Stopping screen recorder...");
+//       screenRecorder.stop();
+//     }
+//   };
+
+//   return (
+//     <div className="video-call-container">
+//       <div className="local-video">
+//         <video ref={localVideoRef} autoPlay playsInline muted />
+//         <div className="video-controls">
+//           <button onClick={startCall}>Start Call</button>
+//           <button onClick={shareScreen}>Share Screen</button>
+//           <button onClick={startScreenRecording}>Record Screen</button>
+//           <button onClick={stopScreenRecording}>Stop Screen Recording</button>
+//         </div>
+//       </div>
+//       <div className="remote-video">
+//         <video ref={remoteVideoRef} autoPlay playsInline />
+//       </div>
+//       <div className="socket-info">
+//         <p>Your Socket ID: {socket.id || "Connecting..."}</p>
+//         <input
+//           type="text"
+//           value={targetEmail}
+//           onChange={(e) => setTargetEmail(e.target.value)}
+//           placeholder="Enter target user email"
+//         />
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default VideoCall;
+
 /* eslint-disable no-unused-vars */
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import io from "socket.io-client";
 import "./VideoCall.css";
 import axios from "axios";
 
-// Use environment variables for URLs; fallback values for development.
+// Use environment variables for URLs; fallback values for local development.
 const SIGNALING_URL = process.env.REACT_APP_SIGNALING_URL || "https://your-tube-clone-2c2e.onrender.com";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://your-tube-clone-2c2e.onrender.com";
 
@@ -1724,64 +2013,49 @@ const socket = io(SIGNALING_URL);
 const VideoCall = ({ setVideoCallModal, currentUserEmail }) => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
+  // Use a ref for a single RTCPeerConnection instance.
   const peerConnectionRef = useRef(null);
+  // We'll use state for the target user's email.
   const [targetEmail, setTargetEmail] = useState("");
 
-  // Screen recording state (for screen recording only).
+  // State for screen recording.
   const [screenRecorder, setScreenRecorder] = useState(null);
   const [screenRecordedChunks, setScreenRecordedChunks] = useState([]);
 
-  // Determine the current user's email. Fallback to localStorage if prop is missing.
-  const userEmail =
-    currentUserEmail ||
-    (localStorage.getItem("Profile") && JSON.parse(localStorage.getItem("Profile")).result?.email) ||
-    "";
-
-  // Log the current user email and socket connection status.
-  useEffect(() => {
-    console.log("Current user email:", userEmail || "Not available");
-    console.log("Socket connected:", socket.connected);
-  }, [userEmail]);
-
-  // Register current user email on mount.
-  useEffect(() => {
-    if (userEmail) {
-      socket.emit("register", userEmail);
-      console.log(`Registered with signaling server as: ${userEmail}`);
-    } else {
-      console.warn("No current user email to register!");
-    }
-  }, [userEmail]);
-
   // Memoize ICE configuration.
-  const configuration = useMemo(
-    () => ({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-    }),
-    []
-  );
+  const configuration = useMemo(() => ({
+    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+  }), []);
 
-  // Initialize a single RTCPeerConnection.
+  // Initialize RTCPeerConnection only once.
   useEffect(() => {
     if (!peerConnectionRef.current) {
       const pc = new RTCPeerConnection(configuration);
       peerConnectionRef.current = pc;
-
       pc.onicecandidate = (event) => {
-        if (event.candidate && targetEmail && userEmail) {
+        if (event.candidate && targetEmail && currentUserEmail) {
+          console.log("Sending ICE candidate from", currentUserEmail, "to", targetEmail);
           socket.emit("ice-candidate", {
             toEmail: targetEmail,
-            fromEmail: userEmail,
+            fromEmail: currentUserEmail,
             candidate: event.candidate,
           });
-          console.log(`ICE candidate sent from ${userEmail} to ${targetEmail}`);
         }
       };
 
+      // When a remote track is received, attach it to the remote video element.
       pc.ontrack = (event) => {
-        if (remoteVideoRef.current) {
+        console.log("Remote track received", event);
+        // For newer browsers, event.streams is available.
+        if (event.streams && event.streams[0]) {
           remoteVideoRef.current.srcObject = event.streams[0];
-          console.log("Remote stream set.");
+          console.log("Remote stream set from event.streams");
+        } else {
+          // Fallback: create a new stream and add the track.
+          const inboundStream = new MediaStream();
+          inboundStream.addTrack(event.track);
+          remoteVideoRef.current.srcObject = inboundStream;
+          console.log("Remote stream created and set from track");
         }
       };
     }
@@ -1791,30 +2065,29 @@ const VideoCall = ({ setVideoCallModal, currentUserEmail }) => {
         peerConnectionRef.current = null;
       }
     };
-  }, [configuration, targetEmail, userEmail]);
+  }, [configuration, targetEmail, currentUserEmail]);
 
   // Listen for signaling messages.
   useEffect(() => {
     socket.on("offer", async (data) => {
       console.log("Received offer from:", data.fromEmail);
-      // Set targetEmail to the sender's email.
       setTargetEmail(data.fromEmail);
       if (peerConnectionRef.current) {
         try {
           await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.offer));
           const answer = await peerConnectionRef.current.createAnswer();
           await peerConnectionRef.current.setLocalDescription(answer);
-          if (!userEmail) {
-            console.warn("User email is missing; cannot send answer.");
+          if (!currentUserEmail) {
+            console.warn("Current user email is missing; cannot send answer.");
           }
           socket.emit("answer", {
             toEmail: data.fromEmail,
-            fromEmail: userEmail || "unknown",
+            fromEmail: currentUserEmail || "unknown",
             answer,
           });
-          console.log(`Sent answer from ${userEmail} to ${data.fromEmail}`);
+          console.log(`Answer sent from ${currentUserEmail || "unknown"} to ${data.fromEmail}`);
         } catch (err) {
-          console.error("Error processing offer:", err);
+          console.error("Error handling offer:", err);
         }
       }
     });
@@ -1825,7 +2098,7 @@ const VideoCall = ({ setVideoCallModal, currentUserEmail }) => {
         try {
           await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.answer));
         } catch (err) {
-          console.error("Error processing answer:", err);
+          console.error("Error setting remote description from answer:", err);
         }
       }
     });
@@ -1834,7 +2107,7 @@ const VideoCall = ({ setVideoCallModal, currentUserEmail }) => {
       if (peerConnectionRef.current && peerConnectionRef.current.remoteDescription) {
         try {
           await peerConnectionRef.current.addIceCandidate(data.candidate);
-          console.log("Added ICE candidate from:", data.fromEmail);
+          console.log("Added ICE candidate from", data.fromEmail);
         } catch (error) {
           console.error("Error adding ICE candidate:", error);
         }
@@ -1848,15 +2121,15 @@ const VideoCall = ({ setVideoCallModal, currentUserEmail }) => {
       socket.off("answer");
       socket.off("ice-candidate");
     };
-  }, [userEmail]);
+  }, [currentUserEmail]);
 
-  // Start call using camera stream.
+  // Start call using camera stream (for signaling purposes).
   const startCall = async () => {
     if (!targetEmail) {
       alert("Please enter the target user's email before starting a call.");
       return;
     }
-    if (!userEmail) {
+    if (!currentUserEmail) {
       alert("Current user email is not available.");
       return;
     }
@@ -1872,10 +2145,10 @@ const VideoCall = ({ setVideoCallModal, currentUserEmail }) => {
       await peerConnectionRef.current.setLocalDescription(offer);
       socket.emit("offer", {
         toEmail: targetEmail,
-        fromEmail: userEmail,
+        fromEmail: currentUserEmail,
         offer,
       });
-      console.log(`Offer sent from ${userEmail} to ${targetEmail}`);
+      console.log(`Offer sent from ${currentUserEmail} to ${targetEmail}`);
     } catch (error) {
       console.error("Error starting call:", error);
     }
@@ -1891,13 +2164,13 @@ const VideoCall = ({ setVideoCallModal, currentUserEmail }) => {
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = screenStream;
       }
-      console.log("Screen shared.");
+      console.log("Screen shared successfully.");
     } catch (error) {
       console.error("Error sharing screen:", error);
     }
   };
 
-  // Upload recorded WebM to the backend for conversion.
+  // Upload the recorded WebM file to the backend for conversion.
   const uploadConversion = async (webmBlob) => {
     const formData = new FormData();
     formData.append("video", webmBlob, "recording.webm");

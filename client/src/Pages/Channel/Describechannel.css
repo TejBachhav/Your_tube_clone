@@ -1,4 +1,4 @@
-.container3_chanel{
+/* .container3_chanel{
     border-bottom: 3px solid rgba(1,26,96,0.692);
     padding: 0.5rem;
     color: whitesmoke;
@@ -44,4 +44,38 @@
 .uploadbtn_chanel:hover,.editbtn_chanel:hover{
 border: 2px solid;
 color: rgb(231,140,14);
+} */
+
+
+.navigation_Home {
+    color: white;
+    background-color: rgb(37,37,37);
+    position: sticky;
+    display: flex;
+    overflow-x: auto;
+    top: 0;
+    border-bottom: 2px solid rgba(128,128,128,0.27);
+}
+.btn_nav_home {
+    background-color: rgb(46,46,46);
+    margin: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 45px;
+    cursor: pointer;
+}
+.btn_nav_home:hover {
+    background-color: rgb(128,128,128);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .navigation_Home {
+    flex-direction: column;
+    align-items: center;
+  }
+  .btn_nav_home {
+    margin: 0.3rem;
+    padding: 0.3rem;
+    font-size: 0.9rem;
+  }
 }

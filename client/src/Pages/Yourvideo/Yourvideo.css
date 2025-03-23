@@ -1,4 +1,17 @@
-.container_yourvideo{
+/* .container_yourvideo{
     padding: 0.5rem;
     color: white;
-}
+} */
+
+.container_yourvideo {
+    padding: 0.5rem;
+    color: white;
+  }
+  
+  /* Responsive adjustments for Your Video */
+  @media (max-width: 768px) {
+    .container_yourvideo {
+      padding: 0.5rem 1rem;
+    }
+  }
+  
