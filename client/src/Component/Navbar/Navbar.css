@@ -362,24 +362,32 @@
 }
 
 /* Responsive adjustments for mobile devices */
+/* Navbar.css (Add at the bottom) */
 @media (max-width: 768px) {
-    .Container_Navbar {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 0.5rem;
-        height: auto;
-    }
-    .Burger_Logo_Navbar,
-    .logo_div_Navbar {
-        margin-bottom: 0.5rem;
-    }
-    .plan-button,
-    .video-call-button {
-        width: 100%;
-        margin-left: 0;
-        font-size: 0.75rem;
-        padding: 8px;
-        justify-content: center;
-        text-align: center;
-    }
+  /* Adjust the main container to use less horizontal space */
+  .Container_Navbar {
+    padding: 0 0.5rem; 
+  }
+
+  /* Shrink or hide certain elements if needed */
+  .SearchBar_Container {
+    width: auto; 
+    margin: 0.5rem 0;
+    /* Possibly reduce the font-size or hide extra elements if it's too crowded */
+  }
+
+  /* Make the sign-in button smaller */
+  .Auth_Btn {
+    padding: 0.3rem;
+    font-size: 0.9rem;
+  }
+
+  /* If you want the plan button or video-call button smaller, do similarly */
+  .plan-button,
+  .video-call-button {
+    margin-left: 10px; 
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
 }
+

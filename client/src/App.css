@@ -97,28 +97,27 @@ video {
   }
 }
 
-/* Mobile */
 @media (max-width: 768px) {
-  .container_Pages_App {
+  /* Make sure the body or main container can scroll if content gets tall */
+  body {
+    overflow-x: hidden; /* no horizontal scroll */
+  }
+
+  /* Example: reduce margins around container2_videoPage */
+  .container2_videoPage {
+    margin: 0.5rem;
     flex-direction: column;
   }
 
-  .container2_Pages_App {
+  /* Example: ensure the local/remote videos in VideoCall are stacked */
+  .video-call-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .local-video,
+  .remote-video {
     width: 100%;
-    height: auto;
-  }
-
-  .video_box_app {
-    width: 100%;
-    height: auto;
-  }
-
-  .Chanel_logo_App {
-    width: 1.8rem;
-    height: 1.8rem;
-  }
-
-  .fstChar_logo_App {
-    font-size: 0.8rem;
+    margin-bottom: 1rem;
   }
 }

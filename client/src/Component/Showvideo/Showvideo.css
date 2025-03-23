@@ -78,24 +78,22 @@
 }
 
 /* Responsive adjustments for mobile devices */
+/* E.g., in Showvideo.css or your Home layout */
 @media (max-width: 768px) {
+    .Container_ShowVideoGrid {
+      flex-direction: column; /* stack videos in one column */
+      align-items: center;
+    }
+  
     .video_ShowVideo {
-        width: 100%;
-        height: auto;
+      width: 90vw;  /* nearly full width on mobile */
+      height: auto; /* let it scale proportionally */
     }
+  
     .video_description {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
+      flex-direction: column;
+      align-items: flex-start;
+      height: auto;
     }
-    .video_details {
-        width: 100%;
-    }
-    .title_vid_ShowVideo {
-        font-size: medium;
-    }
-    .vid_views_UploadTime {
-        flex-direction: column;
-        font-size: small;
-    }
-}
+  }
+  

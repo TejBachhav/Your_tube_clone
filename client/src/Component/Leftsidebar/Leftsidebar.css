@@ -165,26 +165,23 @@
   }
   
   /* Responsive adjustments for mobile devices */
-  @media (max-width: 768px) {
-    .container_leftSidebar {
-      width: 3.5rem;
-    }
-    .icon_sidebar_div {
-      padding: 0.3rem;
-    }
-    .text_sidebar_icon {
-      font-size: 0.75rem;
-      padding: 0.1rem;
-    }
-    .container2_DrawaerLeftSidebar {
-      width: 12rem;
-    }
-    .chanel_lsdbar p {
-      padding: 0.3rem;
-      margin: 0.5rem;
-    }
-    .chanel_lsdbar div {
-      width: 70%;
-    }
+  /* Leftsidebar.css (Add at the bottom) */
+@media (max-width: 768px) {
+  /* Make the sidebar narrower */
+  .container_leftSidebar {
+    width: 50px; /* or any narrower width you prefer */
+    overflow-y: auto;
   }
+
+  /* Hide or shrink the text so only icons remain */
+  .icon_sidebar_div .text_sidebar_icon {
+    display: none; /* hides text, leaving icons only */
+  }
+
+  /* Adjust padding or margin on the icon div */
+  .icon_sidebar_div {
+    padding: 0.3rem; 
+  }
+}
+
   

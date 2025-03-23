@@ -94,11 +94,25 @@
   }
   
   /* Responsive adjustments for mobile devices */
-  @media (max-width: 768px) {
-    .iBox_SearchBar {
-      width: 100%;
-      padding-left: 1rem;
-      font-size: medium;
-    }
+  /* Searchbar.css (Add at the bottom) */
+@media (max-width: 768px) {
+  .SearchBar_Container {
+    flex-direction: column;
+    margin: 0.5rem;
+    width: auto;
+    height: auto;
   }
-  
+
+  .iBox_SearchBar {
+    width: 100%;
+    font-size: 1rem;
+    padding-left: 1rem;
+  }
+
+  /* If the mic or search icon is too large, reduce its size */
+  .searchIcon_SearchBar,
+  .Mic_SearchBar {
+    width: 1.5rem;
+    padding: 0.5rem;
+  }
+}
