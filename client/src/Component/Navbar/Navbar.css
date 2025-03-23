@@ -416,7 +416,7 @@
   margin: auto 0.7rem;
   height: 25px;
   display: flex;
-  flex-wrap: auto;
+  flex-wrap: wrap;
   justify-content: space-around;
 }
 
