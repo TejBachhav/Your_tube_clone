@@ -370,7 +370,7 @@
   display: flex;
   height: calc(3.5rem - 2px);
   background-color: rgb(33, 33, 33);
-  justify-content: space-between;
+  justify-content: normal;
   padding: 0 1rem;
 }
 
@@ -532,6 +532,15 @@
   .video-call-button span,
   .plan-upgrade-text {
     display: none;
+  }
+  .apps_Box {
+    width: 25px;
+    margin: auto 0.7rem;
+    height: 25px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    display: none; /* Hide the app icons on desktop */
   }
 }
 
