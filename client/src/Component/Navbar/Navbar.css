@@ -364,6 +364,11 @@
 /* Responsive adjustments for mobile devices */
 /* Navbar.css */
 @media (max-width: 768px) {
+  .logo_div_Navbar{
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+  }
   .Container_Navbar {
     flex-wrap: wrap; /* Let items move to the next line if needed */
     padding: 0.3rem;
