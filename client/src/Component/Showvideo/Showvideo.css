@@ -82,7 +82,7 @@
 @media (max-width: 768px) {
     .Container_ShowVideoGrid {
       flex-direction: column; /* stack videos in one column */
-      align-items: center;
+      align-items: normal;
     }
   
     .video_ShowVideo {

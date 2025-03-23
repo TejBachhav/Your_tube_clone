@@ -70,7 +70,7 @@ color: rgb(231,140,14);
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
   .navigation_Home {
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
   }
   .btn_nav_home {

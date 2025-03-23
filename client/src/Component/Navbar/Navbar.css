@@ -416,7 +416,7 @@
   margin: auto 0.7rem;
   height: 25px;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: auto;
   justify-content: space-around;
 }
 
@@ -516,7 +516,7 @@
 
   /* Reduce the size of the "Your-Tube" text/logo */
   .logo_title_navbar {
-    font-size: 1rem; /* smaller than 1.2rem for mobile */
+    font-size: small; /* smaller than 1.2rem for mobile */
   }
 
   /* Shrink sign-in, plan, call buttons if they are too wide */

@@ -90,7 +90,7 @@
   .vid_bell_Navbar,
   .Mic_SearchBar {
     color: whitesmoke;
-    margin: auto 0.7rem;
+    margin: auto;
   }
   
   /* Responsive adjustments for mobile devices */
